@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tracker</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href=""https://use.fontawesome.com/releases/v5.14.0/css/all.css" integrity="sha384-HzLeBuhoNPvSl5KYnjx0BT+WB0QEEqLprO+Nbkkk5gbc67FTaL7XIGa2w1L0Xbgc" crossorigin="anonymous">
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+<style>
+body { margin: 0; padding: 0; }
+#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+
+<body>
+    <!--Navbar-->
+    <nav class="navbar">
+        <div class="navbar_cont">
+            <a href="indexin.html" id="navbar_logo">
+                <!--<i class="fas fa-gem"></i> SatTracker</a>-->
+                <div class="logo_img">
+                    <img src="images/SatTrackerlogo.jpg"
+                    alt="pic" class="image" id="logo_img" width= 40%/>
+                </div>
+            
+            <ul class="navbar_menu">
+                <li class="navbar_item">
+                    <a href="indexin.html" class="navbar_links"> Home </a>
+                </li>
+                <!--<li class="navbar_item">
+                    <a href="tracker.html" class="navbar_links">
+                        Tracker
+                    </a>
+                </li> -->
+                <li class="navbar_item">
+                    <a href="tracker.html" class="navbar_links"> Tracker </a>
+                </li>
+                
+                <li class="navbar_item">
+                    <a href="about-in.html" class="navbar_links"> About </a>
+                </li>
+
+                
+                
+                <li class="navbar_btn2">
+                    <a href="index.html" class="button">
+                        Log Out
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+
+    <!--Tracker info-->
+    <div class="tracker">
+        <div class="trkr_cont">
+            <h1>SatTracker Tool</h1>
+        </div>
+        
+            <div class="trkr_tool">
+                <h1>Tool</h1>
+            </div>
+            <div id="earth"></div>
+            <div id="map"></div>
+<button id="btn-spin">Pause rotation</button>
+<script>
+	// TO MAKE THE MAP APPEAR YOU MUST
+	// ADD YOUR ACCESS TOKEN FROM
+	// https://account.mapbox.com
+	mapboxgl.accessToken = 'pk.eyJ1Ijoia2hvbGxleSIsImEiOiJjbGtkOGExdmIwc3VoM2ZxdnI1c3dpMTJ0In0.4domTbCrrtXK8fueWweikg';
+const map = new mapboxgl.Map({
+container: 'map',
+style: 'mapbox://styles/mapbox/satellite-v9',
+projection: 'globe', // Display the map as a globe, since satellite-v9 defaults to Mercator
+zoom: 1.5,
+center: [-90, 40]
+});
+ 
+map.on('style.load', () => {
+map.setFog({}); // Set the default atmosphere style
+});
+ 
+// The following values can be changed to control rotation speed:
+ 
+// At low zooms, complete a revolution every two minutes.
+const secondsPerRevolution = 120;
+// Above zoom level 5, do not rotate.
+const maxSpinZoom = 5;
+// Rotate at intermediate speeds between zoom levels 3 and 5.
+const slowSpinZoom = 3;
+ 
+let userInteracting = false;
+let spinEnabled = true;
+ 
+function spinGlobe() {
+const zoom = map.getZoom();
+if (spinEnabled && !userInteracting && zoom < maxSpinZoom) {
+let distancePerSecond = 360 / secondsPerRevolution;
+if (zoom > slowSpinZoom) {
+// Slow spinning at higher zooms
+const zoomDif =
+(maxSpinZoom - zoom) / (maxSpinZoom - slowSpinZoom);
+distancePerSecond *= zoomDif;
+}
+const center = map.getCenter();
+center.lng -= distancePerSecond;
+// Smoothly animate the map over one second.
+// When this animation is complete, it calls a 'moveend' event.
+map.easeTo({ center, duration: 1000, easing: (n) => n });
+}
+}
+ 
+// Pause spinning on interaction
+map.on('mousedown', () => {
+userInteracting = true;
+});
+ 
+// Restart spinning the globe when interaction is complete
+map.on('mouseup', () => {
+userInteracting = false;
+spinGlobe();
+});
+ 
+// These events account for cases where the mouse has moved
+// off the map, so 'mouseup' will not be fired.
+map.on('dragend', () => {
+userInteracting = false;
+spinGlobe();
+});
+map.on('pitchend', () => {
+userInteracting = false;
+spinGlobe();
+});
+map.on('rotateend', () => {
+userInteracting = false;
+spinGlobe();
+});
+ 
+// When animation is complete, start spinning if there is no ongoing interaction
+map.on('moveend', () => {
+spinGlobe();
+});
+ 
+document.getElementById('btn-spin').addEventListener('click', (e) => {
+spinEnabled = !spinEnabled;
+if (spinEnabled) {
+spinGlobe();
+e.target.innerHTML = 'Pause rotation';
+} else {
+map.stop(); // Immediately end ongoing animation
+e.target.innerHTML = 'Start rotation';
+}
+});
+ 
+spinGlobe();
+</script>
+    </div>
+
+    <script src="app.js"></script>
+    </body>
+    </html>
