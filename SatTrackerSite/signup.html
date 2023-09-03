@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tracker</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href=""https://use.fontawesome.com/releases/v5.14.0/css/all.css" integrity="sha384-HzLeBuhoNPvSl5KYnjx0BT+WB0QEEqLprO+Nbkkk5gbc67FTaL7XIGa2w1L0Xbgc" crossorigin="anonymous">
+</head>
+
+<body>
+    <!--Navbar-->
+    <nav class="navbar">
+        <div class="navbar_cont">
+            <a href="index.html" id="navbar_logo">
+                <!--<i class="fas fa-gem"></i> SatTracker</a>-->
+                <div class="logo_img">
+                    <img src="images/SatTrackerlogo.jpg"
+                    alt="pic" class="image" id="logo_img" width= 40%/>
+                </div>
+            
+            <ul class="navbar_menu">
+                <li class="navbar_item">
+                    <a href="index.html" class="navbar_links"> Home </a>
+                </li>
+                <!--<li class="navbar_item">
+                    <a href="tracker.html" class="navbar_links">
+                        Tracker
+                    </a>
+                </li> -->
+                <li class="navbar_item">
+                    <a href="about-in.html" class="navbar_links"> About </a>
+                </li>
+                
+                <li class="navbar_btn2">
+                    <a href="login.html" class="button">
+                        Log In
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="signup">
+        <div class="signup_cont">
+            <h1>Register</h1>
+            <p>Complete the following fields to create an account.</p>
+            <p>Passwords must be between 6 to 50 characters in length.</p>
+            
+            <form action="regform.php" method="post">
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" name="name" class="form-control" maxlength = 50 required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" class="form-control" maxlength = 50 required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" name="password" class="form-control" minlength=6 maxlength = 50 required>
+                </div>
+                <div class="form-group">
+                    <label>Confirm Password</label>
+                    <input type="password" name="confirm_password" class="form-control" required>
+                </div>
+                <div class="SQ_drop">
+                    <label>Security Question</label>
+                    <select name="security_question" id="SQ">
+                        <option value="mothers_name">Mother's Maiden Name?</option>
+                        <option value="birth_city">In what city were your born?</option>
+                        <option value="first_pet">What was the name of your first pet?</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Security Question Answer</label>
+                    <input type="text" name="security_answer" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <input type="submit" name="submit" class="regbtn" value="Register">
+                </div>
+                <div class="signin">
+                    <p>Already have an account? <a href="login.html">Sign In</a>.</p>
+                </div>
+            </form>
+        </div>
+    </div>
