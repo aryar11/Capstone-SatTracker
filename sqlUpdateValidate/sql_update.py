@@ -3,112 +3,18 @@ import requests  # Connect to space-track.com
 from scrapy import Selector  # Scrape the TLE.txt
 import os  # To access and write to the tle folder
 import datetime #To time script
+import tle_download
 
-
-
-def main():
-    os.chdir("/home/pi/satTrack")  #Change working directory to current folder
-
-    ##################################################
-    ##Connect to Space-track.org and download TLE#####
-    ##################################################
-    LOGIN_URL = "https://www.space-track.org/auth/login"
-    headers = {
-        "content-type": "application/x-www-form-urlencoded",
-        "origin": "https://www.space-track.org",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36"
-    }
-    #Login Information
-    payload = "spacetrack_csrf_token={}&identity=arya.r11223%40gmail.com&password=Password123456%21&btnLogin=LOGIN"
-    #Use Request libraru to connect to webpage
-    sess = requests.session()  
-    r = sess.get(LOGIN_URL, headers={"User-Agent": headers.get("User-Agent")})
-    response = Selector(text=r.content)
-    csrf_token = response.xpath("//input[@name='spacetrack_csrf_token']/@value").get()
-    sess.post(LOGIN_URL, headers=headers, data=payload.format(csrf_token))
-
-    #######Download TLE########
-    print("Downloading 3le")
-    url = "https://www.space-track.org/basicspacedata/query/class/gp/EPOCH/%3Enow-30/orderby/NORAD_CAT_ID,EPOCH/format/3le"
-
-    
-    r = sess.get(url, headers={"User-Agent": headers.get("User-Agent")})
-    if r.status_code == requests.codes.ok:
-        print("Request successful")
-    else:
-        print(f"Request failed with status code {r.status_code}")
-
-    # Store the TLEs content in a variable
-    tle_content = r.content
-
-    # Remove all lines starting from the first line that starts with "0 TBA"
-    tle_lines = tle_content.decode().split("\n")
-    i = 0
-    while i < len(tle_lines):
-        if tle_lines[i].startswith("0 TBA"):
-            del tle_lines[i:i+3]  # Remove the current line and the two following lines
-        else:
-            i += 1
-
-    # Join the modified lines to form the new content
-    modified_tle_content = "\n".join(tle_lines)
-
-    ####################################
-    #######Save TLE text file###########
-    ####################################
-
-    # Specify the folder name
-    folder_name = "tle"
-
-    # Create the folder if it doesn't exist
-    if not os.path.exists(folder_name):
-        os.mkdir(folder_name)
-
-    # Define the file path inside the folder
-    file_path = os.path.join(folder_name, "tle1.txt")
-
-    # Write the modified content to the file
-    with open(file_path, "w") as file:
-        file.write(modified_tle_content)
-
-
-
-    # opening and creating new .txt file
-    with open("tle/tle1.txt", 'r') as r, open('tle/tle.txt', 'w') as o:
-        for line in r:
-        
-            if line.strip():
-                o.write(line)
-
-    # Check if the file exists before attempting to delete
-    if os.path.exists("tle/tle1.txt"):
-        # Delete the file
-        os.remove("tle/tle1.txt")
-        print("File 'tle1.txt' has been deleted.")
-    else:
-        print("File 'tle1.txt' does not exist.")
-
-    print("TLE content has been saved to 'tle/tle.txt'")
-
-
-    # Split the content into lines
-    tle_lines = modified_tle_content.split("\n")
-
-    # Create an iterator to iterate over the lines for the for loop in the connection part of the code
-    line_iterator = iter(tle_lines)
-
-    ######################################
-    ###########Import to SQL##############
-    ######################################
+def importToSQL(line_iterator, tableName):
     # Connection string
-    server = 'satellitetrack.database.windows.net'
+    server = 'tcp:satellitetrack.database.windows.net,1433'
     database = 'satellite-track-website'
     username = 'CloudSA007076c9'
     password = 'SatTrack2023!'
-    driver = 'FreeTDS'  # Make sure the driver is installed
+    driver = '{ODBC Driver 17 for SQL Server}'  # Make sure the driver is installed
 
     # Establish connection
-    conn_str = f"DRIVER={driver};SERVER={server};PORT=1433;DATABASE={database};UID={username};PWD={password};TDS_Version=8.0;"
+    conn_str = f"DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password}"
     conn = pyodbc.connect(conn_str)
 
     # Create a cursor
@@ -118,7 +24,7 @@ def main():
     try:
         # Execute the query
         print("Clearing table")
-        cursor.execute("DELETE FROM dbo.tle")
+        cursor.execute("DELETE FROM " + tableName)
         conn.commit()
 
     except Exception as e:
@@ -157,7 +63,7 @@ def main():
         meanMotion = line3_split[7]
 
         values = [satName, satCat, intlDesignator, elSetEpoch, firstTimeDeriv, secondTimeDeriv, bDragTerm, elSetType, elementNum, orbitInclination, rightAscending, eccentricity, perigee, anomaly, meanMotion, satOrder]
-        query = "INSERT INTO dbo.tle (satName, satCat, intlDesignator, elSetEpoch, firstTimeDeriv, secondTimeDeriv, bDragTerm, elSetType, elementNum, orbitInclination, rightAscending, eccentricity, perigee, anomaly, meanMotion, satOrder) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        query = "INSERT INTO " + tableName + " (satName, satCat, intlDesignator, elSetEpoch, firstTimeDeriv, secondTimeDeriv, bDragTerm, elSetType, elementNum, orbitInclination, rightAscending, eccentricity, perigee, anomaly, meanMotion, satOrder) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         satOrder +=1
         try:
             # Execute the query
@@ -172,6 +78,53 @@ def main():
     cursor.close()
     conn.close() 
     print("Done commiting")
+
+
+
+
+def main():
+    #os.chdir("/home/pi/satTrack")  #Change working directory to current folder
+
+    ##################################################
+    ##Connect to Space-track.org and download TLE#####
+    ##################################################
+    LOGIN_URL = "https://www.space-track.org/auth/login"
+    headers = {
+        "content-type": "application/x-www-form-urlencoded",
+        "origin": "https://www.space-track.org",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36"
+    }
+    #Login Information
+    payload = "spacetrack_csrf_token={}&identity=arya.r11223%40gmail.com&password=Password123456%21&btnLogin=LOGIN"
+    #Use Request libraru to connect to webpage
+    sess = requests.session()  
+    r = sess.get(LOGIN_URL, headers={"User-Agent": headers.get("User-Agent")})
+    response = Selector(text=r.content)
+    csrf_token = response.xpath("//input[@name='spacetrack_csrf_token']/@value").get()
+    sess.post(LOGIN_URL, headers=headers, data=payload.format(csrf_token))
+
+    #######Download Bulk TLE########
+    print("Downloading 3le")
+
+    bulk_TLE_lines = tle_download.download_bulk_TLE(sess, headers, "https://www.space-track.org/basicspacedata/query/class/gp/EPOCH/%3Enow-30/orderby/NORAD_CAT_ID,EPOCH/format/3le")
+
+    leo_TLE_lines =  tle_download.download_LEO(sess,  headers, "https://www.space-track.org/basicspacedata/query/class/gp/EPOCH/%3Enow-30/MEAN_MOTION/%3E11.25/ECCENTRICITY/%3C0.25/OBJECT_TYPE/payload/orderby/NORAD_CAT_ID,EPOCH/format/3le")
+ 
+    meo_TLE_lines =  tle_download.download_MEO(sess,  headers, "https://www.space-track.org/basicspacedata/query/class/gp/EPOCH/%3Enow-30/MEAN_MOTION/1.8--2.39/ECCENTRICITY/%3C0.25/OBJECT_TYPE/payload/orderby/NORAD_CAT_ID,EPOCH/format/3le")
+    
+    starlink_TLE_lines = tle_download.GET_starlink_lines()
+    thorad_TLE_lines = tle_download.GET_thorad_lines()
+    oneweb_TLE_lines = tle_download.GET_oneweb_lines()
+
+    ######################################
+    ###########Import to SQL##############
+    ######################################
+    importToSQL(bulk_TLE_lines, "dbo.tle")
+    importToSQL(leo_TLE_lines, "dbo.LEO")
+    #importToSQL(meo_TLE_lines, "dbo.MEO")   ##not yet a table
+    importToSQL(starlink_TLE_lines, "dbo.starlink")
+    importToSQL(thorad_TLE_lines, "dbo.thorad")
+    importToSQL(oneweb_TLE_lines, "dbo.oneweb")
     
 if __name__ == "__main__":
     #tore the start time just before updating sql
@@ -199,12 +152,12 @@ if __name__ == "__main__":
 
 
     # Clear the contents of the file from last update
-    with open('/home/pi/satTrack/timeToUpdate.txt', 'w') as file:
+    with open('timeToUpdate.txt', 'w') as file:
         file.write('')
 
 
     # Save minutes and seconds to the file.
-    with open('/home/pi/satTrack/timeToUpdate.txt', 'w') as file:
+    with open('timeToUpdate.txt', 'w') as file:
         file.write(f'{minutes} minutes and {seconds} seconds')
 
     #Call sql_validate.py and pass the time taken as an argument.
