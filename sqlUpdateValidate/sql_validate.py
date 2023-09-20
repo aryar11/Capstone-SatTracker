@@ -1,10 +1,12 @@
+import os
+os.chdir("/home/ubuntu/ecen403/ecen403/sqlUpdateValidate")
 import pyodbc
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from datetime import datetime
 import sys
-import os
+
 def sendEmail(message):
     #To and from email addresses
     from_address = "satellitetrackstatus@gmail.com"
@@ -40,13 +42,13 @@ def sendEmail(message):
 
 
 def main(duration):
-    os.chdir("/home/pi/satTrack/") #Change directory when running on Rasp Pi
+#    os.chdir("/home/pi/satTrack/") #Change directory when running on Rasp Pi
     # SQL Connection string
     server = 'satellitetrack.database.windows.net'
     database = 'satellite-track-website'
     username = 'CloudSA007076c9'
     password = 'SatTrack2023!'
-    driver = 'FreeTDS'  # Make sure the driver is installed
+    driver = '{ODBC Driver 18 for SQL Server}'  # Make sure the driver is installed
 
     # Establish connection to SQL
     conn_str = f"DRIVER={driver};SERVER={server};PORT=1433;DATABASE={database};UID={username};PWD={password};TDS_Version=8.0;"
@@ -64,7 +66,7 @@ def main(duration):
     badActorSatellites = []
     notEqual = False
     # Create a line iterator to read the file
-    with open("/home/pi/satTrack/tle/tle.txt", "r") as file:
+    with open("tle/tle.txt", "r") as file:
 
         # Loop through every three lines
         for (line1, line2, line3), row in zip(zip(file, file, file), result):
@@ -122,7 +124,7 @@ def main(duration):
     print("Emailing...")
     
     #Read the time saved from sql_update to timeToUpdate
-    with open('/home/pi/satTrack/timeToUpdate.txt', 'r') as file:
+    with open('timeToUpdate.txt', 'r') as file:
         duration_line = file.readline().strip()
 
     

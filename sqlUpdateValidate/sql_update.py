@@ -1,7 +1,8 @@
+import os
+os.chdir("/home/ubuntu/ecen403/ecen403/sqlUpdateValidate")
 import pyodbc
 import requests  # Connect to space-track.com
 from scrapy import Selector  # Scrape the TLE.txt
-import os  # To access and write to the tle folder
 import datetime #To time script
 import tle_download
 
@@ -11,7 +12,7 @@ def importToSQL(line_iterator, tableName):
     database = 'satellite-track-website'
     username = 'CloudSA007076c9'
     password = 'SatTrack2023!'
-    driver = '{ODBC Driver 17 for SQL Server}'  # Make sure the driver is installed
+    driver = '{ODBC Driver 18 for SQL Server}'  # Make sure the driver is installed
 
     # Establish connection
     conn_str = f"DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password}"
@@ -127,7 +128,8 @@ def main():
     importToSQL(oneweb_TLE_lines, "dbo.oneweb")
     
 if __name__ == "__main__":
-    #tore the start time just before updating sql
+   
+	 #store the start time just before updating sql
     start_time = datetime.datetime.now()
 
     main()

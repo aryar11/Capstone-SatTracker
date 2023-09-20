@@ -1,7 +1,7 @@
-
+import os
+os.chdir("/home/ubuntu/ecen403/ecen403/sqlUpdateValidate")
 import requests  # Connect to space-track.com
 from scrapy import Selector  # Scrape the TLE.txt
-import os  # To access and write to the tle folder
 
 
 def download_bulk_TLE(sess, headers, url):
