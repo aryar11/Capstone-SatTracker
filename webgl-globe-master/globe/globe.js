@@ -13,6 +13,8 @@
 
 var DAT = DAT || {};
 
+var GLOBE_RADIUS = 75;
+
 DAT.Globe = function(container, opts) {
   opts = opts || {};
   
@@ -99,7 +101,7 @@ DAT.Globe = function(container, opts) {
 
     scene = new THREE.Scene();
 
-    var geometry = new THREE.SphereGeometry(200, 40, 30);
+    var geometry = new THREE.SphereGeometry(GLOBE_RADIUS, 40, 30);
 
     shader = Shaders['earth'];
     uniforms = THREE.UniformsUtils.clone(shader.uniforms);
@@ -136,10 +138,11 @@ DAT.Globe = function(container, opts) {
     mesh.scale.set( 1.1, 1.1, 1.1 );
     scene.add(mesh);
 
-    geometry = new THREE.BoxGeometry(0.75, 0.75, 1);
+    geometry = new THREE.CubeGeometry(0.75, 0.75, 1);
     geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0,0,-0.5));
 
     point = new THREE.Mesh(geometry);
+//    point = new THREE.ParticleSystem(geometry);
 
     renderer = new THREE.WebGLRenderer({antialias: true});
     renderer.setSize(w, h);
@@ -249,15 +252,13 @@ DAT.Globe = function(container, opts) {
 
     var phi = (90 - lat) * Math.PI / 180;
     var theta = (180 - lng) * Math.PI / 180;
+    var r = ((1 + (size / 100.0)) * GLOBE_RADIUS);
 
-    point.position.x = 200 * Math.sin(phi) * Math.cos(theta);
-    point.position.y = 200 * Math.cos(phi);
-    point.position.z = 200 * Math.sin(phi) * Math.sin(theta);
-
+    point.position.x = r * Math.sin(phi) * Math.cos(theta);
+    point.position.y = r * Math.cos(phi);
+    point.position.z = r * Math.sin(phi) * Math.sin(theta);
+    point.scale.set(1, 1, 1);  // CHANGES SIZE OF DOTS !!!
     point.lookAt(mesh.position);
-
-    point.scale.z = Math.max( size, 0.1 ); // avoid non-invertible matrix
-    point.updateMatrix();
 
     for (var i = 0; i < point.geometry.faces.length; i++) {
 

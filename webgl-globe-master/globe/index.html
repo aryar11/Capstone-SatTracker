@@ -110,9 +110,9 @@
   </div>
 
   <div id="currentInfo">
-    <span id="year1990" class="year">1990</span>
-    <span id="year1995" class="year">1995</span>
-    <span id="year2000" class="year">2000</span>
+    <span id="year1990" class="year">LEO</span>
+    <span id="year1995" class="year">MEO</span>
+    <span id="year2000" class="year">Starlink</span>
   </div>
 
   <div id="title">
@@ -133,7 +133,7 @@
       Detector.addGetWebGLMessage();
     } else {
 
-      var years = ['1990','1995','2000'];
+      var years = ['LEO','MEO','Starlink'];
       var container = document.getElementById('container');
       var globe = new DAT.Globe(container);
 
@@ -143,7 +143,7 @@
       var settime = function(globe, t) {
         return function() {
           new TWEEN.Tween(globe).to({time: t/years.length},500).easing(TWEEN.Easing.Cubic.EaseOut).start();
-          var y = document.getElementById('year'+years[t]);
+          var y = document.getElementById(years[t]);
           if (y.getAttribute('class') === 'year active') {
             return;
           }
@@ -156,7 +156,7 @@
       };
       
       for(var i = 0; i<years.length; i++) {
-        var y = document.getElementById('year'+years[i]);
+        var y = document.getElementById(years[i]);
         y.addEventListener('mouseover', settime(globe,i), false);
       }
       
