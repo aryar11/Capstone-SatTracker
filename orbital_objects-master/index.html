@@ -136,7 +136,7 @@
   The <a href="http://www.chromeexperiments.com/globe">WebGL Globe</a> is an
   open platform for visualizing geographic data. <span
     class="bull">&bull;</span> <a href="https://github.com/dataarts/webgl-globe">Get
-  the code</a> <span class="bull">&bull;</span> By the Google Data Arts Team</a>
+  the code</a> <span class="bull">&bull;</span> By the Google Data Arts Team
 </div>
 
 <div id="title">
@@ -158,58 +158,57 @@ Use Up and down arrows zoom in and out. Use the mouse to rotate.<br /><br />Sour
   var globe = DAT.Globe(document.getElementById('container'), function(label) {
     return new THREE.Color([0x34cb57, 0x666666, 0xdb0b00][label]);
   });
-  var satellites = ["LEO", "MEO"];
-  var i, tweens = [];
-  var settime = function(globe, t) {
-        return function() {
-          new TWEEN.Tween(globe).to({satellite: (t === 1) ? 0 : 1},500).easing(TWEEN.Easing.Cubic.EaseOut).start();
-          var y = document.getElementById(satellites[t]);
-          if (y.getAttribute('class') === 'satellite active') {
-            return;
-          }
-          var yy = document.getElementsByClassName('satellite');
-          for(i=0; i<yy.length; i++) {
-            yy[i].setAttribute('class','satellite');
-          }
-          y.setAttribute('class', 'satellite active');
-        };
-  };
 
-  for(var i = 0; i<satellites.length; i++) {
-      var y = document.getElementById(satellites[i]);
-      y.addEventListener('mouseover', settime(globe,i), false);
-  }
-    
-  var xhr;
-  TWEEN.start();
-      
-  /////////////////////////////////
-  ////////////IMPORT DATA//////////
-  /////////////////////////////////
-  xhr = new XMLHttpRequest();
-  xhr.open('GET', 'test.json', true);
-  xhr.onreadystatechange = function(e) {
-    if (xhr.readyState === 4) {
-      if (xhr.status === 200) {
-        var data = JSON.parse(xhr.responseText);
-        window.data = data;
-        for(i=0; i<data.length;i++){
-          console.log( data[i][0]);
-          console.log(data[i][1]);
-          globe.addData(data[i][1], {format: 'magnitude', name: data[i][0], animated: true});
+  var currentIndex = 0; // Keep track of the currently loaded data index
+
+  function loadDataAndUpdateGlobe(index) {
+    xhr = new XMLHttpRequest();
+    xhr.open('GET', 'test.json', true);
+    xhr.onreadystatechange = function(e) {
+      if (xhr.readyState === 4) {
+        if (xhr.status === 200) {
+          var data = JSON.parse(xhr.responseText);
+          if (data[index] && data[index][1]) {
+            console.log(data[index]);
+            window.data = data[index][1];
+            clearGlobe(); ///MAKE THIS A FUNCTION
+            globe.addData(data[index][1], { format: 'magnitude' });
+            globe.createPoints();
+            globe.animate();
+            document.body.style.backgroundImage = 'none'; // Remove loading
+          }
         }
-        //globe.addData(data, {format: 'legend'});
-        globe.createPoints();
-        settime(globe,0)();
-        globe.animate();
-        document.body.style.backgroundImage = 'none'; // remove loading
       }
+    };
+    xhr.send(null);
+  }
+
+  // Initial data load
+  loadDataAndUpdateGlobe(currentIndex);
+
+  // Event listener for MEO click
+  var meoElement = document.getElementById('MEO');
+  meoElement.addEventListener('click', function() {
+    currentIndex = 1; // Update the index to load data[1][1]
+    loadDataAndUpdateGlobe(currentIndex);
+  });
+
+  var leoElement = document.getElementById('LEO');
+  leoElement.addEventListener('click', function() {
+    currentIndex = 0; // Update the index to load data[0][1]
+    loadDataAndUpdateGlobe(currentIndex);
+  });
+
+  // Function to clear the globe
+  function clearGlobe() {
+    if (globe.points) {
+      globe.scene.remove(globe.points);
+      globe.points.geometry.dispose();
+      globe.points.material.dispose();
+      globe.points = null;
     }
-  };
-  xhr.send(null);
-
+  }
 </script>
-
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
   (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),

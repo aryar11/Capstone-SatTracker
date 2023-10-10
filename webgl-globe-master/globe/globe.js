@@ -168,6 +168,26 @@ DAT.Globe = function(container, opts) {
     }, false);
   }
 
+  // Add this code to the `addData` function before creating subgeo
+  function padMorphTargets(subgeo, expectedCount, current_size) {
+    // Check if the current number of data points is less than expectedCount
+    //if (subgeo.vertices.length < expectedCount) {
+      var diff = expectedCount - current_size;
+      for (var i = 0; i < diff; i++) {
+        // You can duplicate existing data or add dummy data here
+        var lat = 0; // Adjust lat and lng as needed
+        var lng = 0;
+        var size = 0;
+        var color = new THREE.Color(0xffffff); // Adjust color as needed
+        addPoint(lat, lng, size, color, subgeo);
+      }
+    //}
+  }
+
+
+
+  var max_size = 0;
+
   function addData(data, opts) {
     var lat, lng, size, color, i, step, colorFnWrapper;
 
@@ -190,10 +210,11 @@ DAT.Globe = function(container, opts) {
         for (i = 0; i < data.length; i += step) {
           lat = data[i];
           lng = data[i + 1];
-//        size = data[i + 2];
+          size = data[i + 2];
           color = colorFnWrapper(data,i);
-          size = 0;
+          //size = 0;
           addPoint(lat, lng, size, color, this._baseGeometry);
+          max_size = data.length/3;
         }
       }
       if(this._morphTargetId === undefined) {
@@ -204,6 +225,7 @@ DAT.Globe = function(container, opts) {
       opts.name = opts.name || 'morphTarget'+this._morphTargetId;
     }
     var subgeo = new THREE.Geometry();
+    var current_size = 0; 
     for (i = 0; i < data.length; i += step) {
       lat = data[i];
       lng = data[i + 1];
@@ -211,13 +233,20 @@ DAT.Globe = function(container, opts) {
       size = data[i + 2];
       size = size*200;
       addPoint(lat, lng, size, color, subgeo);
+      current_size = data.length/3;
     }
+    //Check if we need to pad with more points
+    console.log(current_size, "  max:", max_size)
+    if(current_size < max_size){
+      console.log("Time to pad")
+      padMorphTargets(subgeo, max_size, current_size);
+    }
+
     if (opts.animated) {
       this._baseGeometry.morphTargets.push({'name': opts.name, vertices: subgeo.vertices});
     } else {
       this._baseGeometry = subgeo;
     }
-
   };
 
   function createPoints() {
@@ -257,7 +286,7 @@ DAT.Globe = function(container, opts) {
     point.position.x = r * Math.sin(phi) * Math.cos(theta);
     point.position.y = r * Math.cos(phi);
     point.position.z = r * Math.sin(phi) * Math.sin(theta);
-    point.scale.set(1, 1, 1);  // CHANGES SIZE OF DOTS !!!
+    point.scale.set(4, 4, 4);  // CHANGES SIZE OF DOTS !!!
     point.lookAt(mesh.position);
 
     for (var i = 0; i < point.geometry.faces.length; i++) {

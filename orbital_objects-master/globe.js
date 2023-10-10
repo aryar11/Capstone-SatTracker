@@ -228,26 +228,10 @@ DAT.Globe = function(container, colorFn) {
     point.position.x = r * Math.sin(phi) * Math.cos(theta);
     point.position.y = r * Math.cos(phi);
     point.position.z = r * Math.sin(phi) * Math.sin(theta);
-    point.scale.set(20, 20, 20);  // CHANGES SIZE OF DOTS !!!
+    point.scale.set(4, 4, 4);  // CHANGES SIZE OF DOTS !!!
+
     point.lookAt(mesh.position);
 
-  /*
-  // Add a mouseover event listener to show the popup when hovering over the point
-    point.addEventListener('mouseover ', function(event) {
-      console.log("Mouseover");
-      showPopup({
-        lat: lat,
-        lng: lng,
-        altitude: size // Assuming 'size' represents altitude in this context
-      })
-    })
-
-    // Add a mouseout event listener to hide the popup when the mouse leaves the point
-    point.addEventListener('mouseout', function(event) {
-      console.log("Mouseout");
-      hidePopup();
-    });
-    */
 //    point.scale.z = Math.max( size, 0.1 );
     point.updateMatrix();
 
@@ -259,7 +243,7 @@ DAT.Globe = function(container, colorFn) {
 
     THREE.GeometryUtils.merge(subgeo, point);
   }
-  
+
   function onMouseDown(event) {
     event.preventDefault();
 
@@ -360,11 +344,11 @@ DAT.Globe = function(container, colorFn) {
   this.animate = animate;
 
 
-  this.__defineGetter__('satellite', function() {
-    return this._satellite || 0;
+  this.__defineGetter__('time', function() {
+    return this._time || 0;
   });
 
-  this.__defineSetter__('satellite', function(t) {
+  this.__defineSetter__('time', function(t) {
     var validMorphs = [];
     var morphDict = this.points.morphTargetDictionary;
     for(var k in morphDict) {
@@ -385,7 +369,7 @@ DAT.Globe = function(container, colorFn) {
       this.points.morphTargetInfluences[lastIndex] = 1 - leftover;
     }
     this.points.morphTargetInfluences[index] = leftover;
-    this._satellite = t;
+    this._time = t;
   });
 
   this.addData = addData;
@@ -396,25 +380,3 @@ DAT.Globe = function(container, colorFn) {
   return this;
 
 };
-
-////POPUP CODE/////
-
-// Add this variable to store the currently hovered satellite information
-var hoveredSatellite = null;
-
-// Add a function to show the popup
-function showPopup(data) {
-  var popup = document.getElementById('popup');
-  popup.innerHTML = 'Satellite Name: ' +" data.name" + '<br>' +
-                   'Latitude: ' + data.lat + '<br>' +
-                   'Longitude: ' + data.lng + '<br>' +
-                   'Altitude: ' + data.altitude + ' km';
-  popup.style.display = 'block';
-}
-
-// Add a function to hide the popup
-function hidePopup() {
-  var popup = document.getElementById('popup');
-  popup.style.display = 'none';
-}
-
