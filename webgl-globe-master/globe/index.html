@@ -110,13 +110,13 @@
   </div>
 
   <div id="currentInfo">
-    <span id="year1990" class="year">LEO</span>
-    <span id="year1995" class="year">MEO</span>
-    <span id="year2000" class="year">Starlink</span>
+    <span id="LEO" class="year">LEO</span>
+    <span id="MEO" class="year">MEO</span>
+    <span id="Starlink" class="year">Starlink</span>
   </div>
 
   <div id="title">
-    World Population
+    SatTracker
   </div>
 
   <a id="ce" href="http://www.chromeexperiments.com/globe">
@@ -140,25 +140,29 @@
       console.log(globe);
       var i, tweens = [];
       
-      var settime = function(globe, t) {
+      var settime = function(globe, year) {
         return function() {
-          new TWEEN.Tween(globe).to({time: t/years.length},500).easing(TWEEN.Easing.Cubic.EaseOut).start();
-          var y = document.getElementById(years[t]);
-          if (y.getAttribute('class') === 'year active') {
-            return;
+          var index = years.indexOf(year);
+          if (index !== -1) {
+            new TWEEN.Tween(globe).to({ time: index / years.length }, 500).easing(TWEEN.Easing.Cubic.EaseOut).start();
+            var y = document.getElementById(years[index]);
+            if (y.getAttribute('class') === 'year active') {
+              return;
+            }
+            var yy = document.getElementsByClassName('year');
+            for (i = 0; i < yy.length; i++) {
+              yy[i].setAttribute('class', 'year');
+            }
+            y.setAttribute('class', 'year active');
           }
-          var yy = document.getElementsByClassName('year');
-          for(i=0; i<yy.length; i++) {
-            yy[i].setAttribute('class','year');
-          }
-          y.setAttribute('class', 'year active');
         };
       };
-      
-      for(var i = 0; i<years.length; i++) {
+
+      for (var i = 0; i < years.length; i++) {
         var y = document.getElementById(years[i]);
-        y.addEventListener('mouseover', settime(globe,i), false);
+        y.addEventListener('mouseover', settime(globe, years[i]), false);
       }
+
       
       var xhr;
       TWEEN.start();
