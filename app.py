@@ -4,7 +4,6 @@ from flask import Flask, render_template, redirect, url_for, send_from_directory
 import os
 
 import numpy as np
-import os 
 # For reading NetCDF data
 from netCDF4 import Dataset #Network Common Data Form, needed to read the mesh file
 
@@ -18,6 +17,7 @@ from skyfield.api import load, EarthSatellite
 
 #For geolocation
 import googlemaps
+import boto3
 gmaps = googlemaps.Client(key='AIzaSyDylyC2otrMcdv4i7BGajUbetqbS0-k1ho')
 
 
@@ -301,7 +301,7 @@ def generate_plot():
 
     # Read satellite TLE data from file
     satellites = []
-    with open('Sat_Data.txt', 'r') as f:
+    with open('sqlUpdateValidate/tle/starlinkTLE.txt', 'r') as f:
         lines = f.readlines()
         for i in range(0, len(lines), 3):
             name = lines[i].strip()[1:]

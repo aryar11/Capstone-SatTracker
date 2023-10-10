@@ -1,91 +1,99 @@
 import os
-os.chdir("/home/ubuntu/ecen403/ecen403/sqlUpdateValidate")
+#os.chdir("/home/ubuntu/ecen403/ecen403/sqlUpdateValidate")
 import pyodbc
 import requests  # Connect to space-track.com
 from scrapy import Selector  # Scrape the TLE.txt
 import datetime #To time script
 import tle_download
-
+import mysql.connector
+from skyfield.api import EarthSatellite, Topos, load
 def importToSQL(line_iterator, tableName):
-    # Connection string
-    server = 'tcp:satellitetrack.database.windows.net,1433'
-    database = 'satellite-track-website'
-    username = 'CloudSA007076c9'
-    password = 'SatTrack2023!'
-    driver = '{ODBC Driver 18 for SQL Server}'  # Make sure the driver is installed
+    host = 'sattrack.ckiq4qoeqhbu.us-east-2.rds.amazonaws.com'
+    database = 'SatTracker'
+    username = 'admin'
+    password = 'SatTracker23'
 
-    # Establish connection
-    conn_str = f"DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password}"
-    conn = pyodbc.connect(conn_str)
-
-    # Create a cursor
-    cursor = conn.cursor()
-
-    ####Clearing table####
     try:
-        # Execute the query
-        print("Clearing table")
-        cursor.execute("DELETE FROM " + tableName)
-        conn.commit()
+        connection = mysql.connector.connect(host=host, user=username, password=password, database=database)
+        cursor = connection.cursor()
 
-    except Exception as e:
-        print("Error executing query:", e)
+        print("Connected to the database")
 
-
-    values = []
-    satOrder = 0
-    # Loop through every three lines
-    for line1, line2, line3 in zip(line_iterator, line_iterator, line_iterator):
-        # Split line 1
-        line1_split = line1.split()
-        #get name
-        satName = ' '.join(line1_split[1:])
-
-        #split line 2
-        line2_split = line2.split()
-        #assign values
-        satCat = line2_split[1]
-        intlDesignator = line2_split[2]
-        elSetEpoch = line2_split[3]
-        firstTimeDeriv = line2_split[4]
-        secondTimeDeriv = line2_split[5]
-        bDragTerm  = line2_split[6]
-        elSetType = line2_split[7]
-        elementNum = line2_split[8]
-
-        #split line 3
-        line3_split = line3.split()
-        #assign values in 3rd line
-        orbitInclination = line3_split[2]
-        rightAscending = line3_split[3]
-        eccentricity = line3_split[4]
-        perigee = line3_split[5]
-        anomaly = line3_split[6]
-        meanMotion = line3_split[7]
-
-        values = [satName, satCat, intlDesignator, elSetEpoch, firstTimeDeriv, secondTimeDeriv, bDragTerm, elSetType, elementNum, orbitInclination, rightAscending, eccentricity, perigee, anomaly, meanMotion, satOrder]
-        query = "INSERT INTO " + tableName + " (satName, satCat, intlDesignator, elSetEpoch, firstTimeDeriv, secondTimeDeriv, bDragTerm, elSetType, elementNum, orbitInclination, rightAscending, eccentricity, perigee, anomaly, meanMotion, satOrder) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-        satOrder +=1
+        #### Clearing table ####
         try:
             # Execute the query
-            print("executing: ", values[0])
-            cursor.execute(query, values) 
+            print("Clearing table")
+            cursor.execute("DELETE FROM " + tableName)
+            connection.commit()
 
         except Exception as e:
             print("Error executing query:", e)
 
-    print("Commiting Inserts...")
-    conn.commit()
-    cursor.close()
-    conn.close() 
-    print("Done commiting")
+        values = []
+        satOrder = 0
+        ts = load.timescale()
+        # Loop through every three lines
+        for line1, line2, line3 in zip(line_iterator, line_iterator, line_iterator):
+            # Split line 1
+            line1_split = line1.split()
+            # get name
+            satName = ' '.join(line1_split[1:])
 
+            # split line 2
+            line2_split = line2.split()
+            # assign values
+            satCat = line2_split[1]
+            intlDesignator = line2_split[2]
+            elSetEpoch = line2_split[3]
+            firstTimeDeriv = line2_split[4]
+            secondTimeDeriv = line2_split[5]
+            bDragTerm = line2_split[6]
+            elSetType = line2_split[7]
+            elementNum = line2_split[8]
 
+            # split line 3
+            line3_split = line3.split()
+            # assign values in 3rd line
+            orbitInclination = line3_split[2]
+            rightAscending = line3_split[3]
+            eccentricity = line3_split[4]
+            perigee = line3_split[5]
+            anomaly = line3_split[6]
+            meanMotion = line3_split[7]
 
+            #Getting lat long and altitude
+            satellite = EarthSatellite(line2, line3, line1, ts=None)
+            geocentric = satellite.at(ts.now())
+            subpoint = geocentric.subpoint()
+            # Location on Earth (latitude, longitude, altitude)
+            latitude = float(subpoint.latitude.degrees)
+            longitude = float(subpoint.longitude.degrees)
+            altitude = float(subpoint.elevation.m)
+            #print(latitude,longitude, altitude)
+            query = """
+            INSERT INTO {} (satName, satCat, intlDesignator, elSetEpoch, firstTimeDeriv, secondTimeDeriv, bDragTerm, elSetType, elementNum, orbitInclination, rightAscending, eccentricity, perigee, anomaly, meanMotion, satOrder, lat, lng, alt)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """.format(tableName)
+
+            # Values to insert into the table as a tuple
+            values = (satName, satCat, intlDesignator, elSetEpoch, firstTimeDeriv, secondTimeDeriv, bDragTerm, elSetType, elementNum, orbitInclination, rightAscending, eccentricity, perigee, anomaly, meanMotion, satOrder, latitude, longitude, altitude)
+            
+            try:
+                # Execute the query
+                print("executing: ", satName)
+                cursor.execute(query, values)
+            except Exception as e:
+                print("Error executing query:", e)
+            satOrder += 1
+        print("Committing Inserts...")
+        connection.commit()
+        cursor.close()
+        connection.close()
+        print("Done committing")
+    except Exception as e:
+        print(f"Error: {str(e)}")
 
 def main():
-    #os.chdir("/home/pi/satTrack")  #Change working directory to current folder
-
     ##################################################
     ##Connect to Space-track.org and download TLE#####
     ##################################################
@@ -120,12 +128,14 @@ def main():
     ######################################
     ###########Import to SQL##############
     ######################################
-    importToSQL(bulk_TLE_lines, "dbo.tle")
-    importToSQL(leo_TLE_lines, "dbo.LEO")
-    #importToSQL(meo_TLE_lines, "dbo.MEO")   ##not yet a table
-    importToSQL(starlink_TLE_lines, "dbo.starlink")
-    importToSQL(thorad_TLE_lines, "dbo.thorad")
-    importToSQL(oneweb_TLE_lines, "dbo.oneweb")
+    
+    importToSQL(bulk_TLE_lines, "tle")
+    importToSQL(leo_TLE_lines, "LEO")
+    importToSQL(meo_TLE_lines, "MEO")  
+
+    importToSQL(starlink_TLE_lines, "starlink")
+    importToSQL(thorad_TLE_lines, "thorad")
+    importToSQL(oneweb_TLE_lines, "oneweb")
     
 if __name__ == "__main__":
    

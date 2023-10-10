@@ -17,7 +17,7 @@ from skyfield.api import load, EarthSatellite
 #for API request for validation
 import requests
 import json
-
+import boto3
 #For geolocation
 import googlemaps
 gmaps = googlemaps.Client(key='AIzaSyDylyC2otrMcdv4i7BGajUbetqbS0-k1ho')
@@ -295,7 +295,7 @@ layout = go.Layout(
 
 # Read satellite TLE data from file
 satellites = []
-with open('SAT_TEST.txt', 'r') as f:
+with open('sqlUpdateValidate/tle/starlinkTLE.txt', 'r') as f:
     lines = f.readlines()
     for i in range(0, len(lines), 3):
         name = lines[i].strip()[1:]
@@ -369,6 +369,18 @@ fig.add_annotation(
 
 
 plot(fig, validate=False, filename='SphericalTopography.html', auto_open=True)
+#####Importing to bucket######
+s3 = boto3.client(
+    's3',
+    aws_access_key_id='AKIA2GBQBRJE53N4XPM3',
+    aws_secret_access_key='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'
+)
+bucket_name = "visualizationoutput"
+html_file_path = "https://visualizationoutput.s3.us-east-2.amazonaws.com/SphericalTopography.html"
+
+#upload the HTML to S3 aws
+s3.upload_file('SphericalTopography.html', bucket_name, 'SphericalTopography.html')
+
 
 
 #Get total time
