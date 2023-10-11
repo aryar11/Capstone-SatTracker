@@ -18,8 +18,9 @@ var GLOBE_RADIUS = 75;
 DAT.Globe = function(container, colorFn) {
 
   colorFn = colorFn || function(x) {
+    var normalC = x / 30000
     var c = new THREE.Color();
-    c.setHSL( ( 0.6 - ( x * 0.5 ) ), 1.0, 0.5 );
+    c.setHSL( ( 0.6 - ( normalC * 0.5 ) ), 1.0, 0.5 );
     console.log(c.getHex());
     return c;
   };
@@ -175,10 +176,10 @@ DAT.Globe = function(container, colorFn) {
     opts.format = opts.format || 'magnitude'; // other option is 'legend'
     console.log(opts.format);
     if (opts.format === 'magnitude') {
-      step = 3;
+      step = 4;
       colorFnWrapper = function(data, i) { return colorFn(data[i+2]); }
     } else if (opts.format === 'legend') {
-      step = 4;
+      step = 5;
       colorFnWrapper = function(data, i) { return colorFn(data[i+3]); }
     } else {
       throw('error: format not supported: '+opts.format);
@@ -192,9 +193,9 @@ DAT.Globe = function(container, colorFn) {
     for (i = 0; i < data.length; i += step) {
       lat = data[i];
       lng = data[i + 1];
-      color = colorFnWrapper(data,i);
+      color = colorFnWrapper(data,i+2);
       size = data[i + 2];
-      size = size * GLOBE_RADIUS;
+      size = size / 30;// size = size *GLOBE_RADIUS;
       addPoint(lat, lng, size, color, subgeo);
 
       min_size = Math.min(min_size, size);
@@ -229,7 +230,9 @@ DAT.Globe = function(container, colorFn) {
     point.position.y = r * Math.cos(phi);
     point.position.z = r * Math.sin(phi) * Math.sin(theta);
     point.scale.set(4, 4, 4);  // CHANGES SIZE OF DOTS !!!
-
+    point.lat = lat;
+    point.lng = lng;
+    point.size = size*30;
     point.lookAt(mesh.position);
 
 //    point.scale.z = Math.max( size, 0.1 );
@@ -243,6 +246,58 @@ DAT.Globe = function(container, colorFn) {
 
     THREE.GeometryUtils.merge(subgeo, point);
   }
+
+// Add an event listener for mouse clicks on the container
+container.addEventListener('click', onClick, false);
+
+function onClick(event) {
+    event.preventDefault();
+
+    // Get the mouse click coordinates
+    var mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+    var mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+
+    // Create a raycaster to detect intersections with 3D objects
+    // Inside your onClick function
+    var raycaster = new THREE.Raycaster();
+    var mouseVector = new THREE.Vector2(mouseX, mouseY);
+
+    // Get the ray's origin and direction
+    raycaster.ray.origin.copy(camera.position);
+    raycaster.ray.direction.set(mouseVector.x, mouseVector.y, 0.5).unproject(camera).sub(camera.position).normalize();
+
+        // Find intersected objects
+    var intersects = raycaster.intersectObject(globe.points);
+
+    if (intersects.length > 0) {
+        // Get the clicked point's data (you may need to adjust this depending on your data structure)
+        var clickedData = window.data[intersects[0].faceIndex];
+
+        // Display the pop-up box with the point's information
+        var popup = document.getElementById('popup');
+        popup.innerHTML = "Latitude: " + clickedData.lat + "<br>Longitude: " + clickedData.lng + "<br>Size: " + clickedData.size;
+        popup.style.left = event.clientX + 'px';
+        popup.style.top = event.clientY + 'px';
+        popup.style.display = 'block';
+
+        // Add a click event listener to close the pop-up box
+        popup.addEventListener('click', function() {
+            popup.style.display = 'none';
+        });
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
   function onMouseDown(event) {
     event.preventDefault();
