@@ -171,7 +171,7 @@ Use Up and down arrows zoom in and out. Use the mouse to rotate.<br /><br />Sour
           if (data[index] && data[index][1]) {
             console.log(data[index]);
             window.data = data[index][1];
-            clearGlobe(); ///MAKE THIS A FUNCTION
+            clearGlobe(); 
             globe.addData(data[index][1], { format: 'magnitude' });
             globe.createPoints();
             globe.animate();
@@ -191,12 +191,25 @@ Use Up and down arrows zoom in and out. Use the mouse to rotate.<br /><br />Sour
   meoElement.addEventListener('click', function() {
     currentIndex = 1; // Update the index to load data[1][1]
     loadDataAndUpdateGlobe(currentIndex);
+    var activeElements = document.querySelectorAll('.active');
+    for (var i = 0; i < activeElements.length; i++) {
+      activeElements[i].classList.remove('active');
+    }
+    // Add 'active' to 'MEO' 
+    meoElement.classList.add('active');
   });
 
   var leoElement = document.getElementById('LEO');
   leoElement.addEventListener('click', function() {
     currentIndex = 0; // Update the index to load data[0][1]
     loadDataAndUpdateGlobe(currentIndex);
+    //Clear active
+    var activeElements = document.querySelectorAll('.active');
+    for (var i = 0; i < activeElements.length; i++) {
+      activeElements[i].classList.remove('active');
+    }
+    // Add 'active' to the 'LEO' 
+    leoElement.classList.add('active');
   });
 
   // Function to clear the globe

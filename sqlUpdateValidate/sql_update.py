@@ -68,7 +68,7 @@ def importToSQL(line_iterator, tableName):
             # Location on Earth (latitude, longitude, altitude)
             latitude = float(subpoint.latitude.degrees)
             longitude = float(subpoint.longitude.degrees)
-            altitude = float(subpoint.elevation.m)
+            altitude = float(subpoint.elevation.km)
             #print(latitude,longitude, altitude)
             query = """
             INSERT INTO {} (satName, satCat, intlDesignator, elSetEpoch, firstTimeDeriv, secondTimeDeriv, bDragTerm, elSetType, elementNum, orbitInclination, rightAscending, eccentricity, perigee, anomaly, meanMotion, satOrder, lat, lng, alt)
@@ -80,7 +80,7 @@ def importToSQL(line_iterator, tableName):
             
             try:
                 # Execute the query
-                print("executing: ", satName)
+                #print("executing: ", satName)
                 cursor.execute(query, values)
             except Exception as e:
                 print("Error executing query:", e)
@@ -128,13 +128,17 @@ def main():
     ######################################
     ###########Import to SQL##############
     ######################################
-    
+    print("Updating TLE...")
     importToSQL(bulk_TLE_lines, "tle")
+    print("Updating LEO...")
     importToSQL(leo_TLE_lines, "LEO")
+    print("Updating MEO...")
     importToSQL(meo_TLE_lines, "MEO")  
-
+    print("Updating starlink...")
     importToSQL(starlink_TLE_lines, "starlink")
+    print("Updating thorad...")
     importToSQL(thorad_TLE_lines, "thorad")
+    print("Updating oneweb...")
     importToSQL(oneweb_TLE_lines, "oneweb")
     
 if __name__ == "__main__":
