@@ -28,10 +28,17 @@ def fetch_tles():
                 
                 results = cursor.fetchall()
                 for result in results:
-                    entry = [result['lat'], result['lng'], result['alt'], result['satName']]
+                    for result in results:
+                     lat = float(result['lat'])   #LEO is stored as strings, covert to floats
+                     lon = float(result['lng'])
+                     alt = float(result['alt'])
+                    name = result['satName']
+                    entry = [lat, lon, alt, name]
                     satellites_for_category.append(entry)
 
-                satellite_data.append([table_name, satellites_for_category])
+
+                satellite_data.append([table_name] + satellites_for_category) #removes extra bracket from the list
+
 
         # Output to a JSON file
         with open("satellites.json", "w") as json_file:
@@ -57,3 +64,5 @@ def fetch_tles():
         connection.close()
 
 fetch_tles()
+
+
