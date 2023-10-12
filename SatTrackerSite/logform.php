@@ -2,15 +2,19 @@
 //Login php
 if(isset($_POST['submit'])){
     //Take inputs from submission
-    $email = $_POST['email'];
+    $username = $_POST['username'];
     $passcode = $_POST['password'];
 
 }
 
-//connect to DB
+/*Connect to the DB 
 define("host", "localhost:3307");
 define("db_user", "root");
 define("pass", "");
+define("db", "users"); */
+define("host", "sattrack.ckiq4qoeqhbu.us-east-2.rds.amazonaws.com");
+define("db_user", "admin");
+define("pass", "SatTracker23");
 define("db", "users");
 
 $con2 = mysqli_connect(host, db_user, null, db);
@@ -24,14 +28,14 @@ if (!$con2){
 
 
 //Read emails and passwords from DB
-$query = "SELECT email, password from info";
+$query = "SELECT username, password from info";
 
 $login_check = mysqli_query($con2, $query);
 //check for match while iterating through table
 if($login_check->num_rows > 0){
    
     while($row = mysqli_fetch_assoc($login_check)){
-        if($email == $row["email"] && $passcode == $row["password"]){
+        if($username == $row["username"] && $passcode == $row["password"]){
             echo "login found";
             header("location: sessstart.php");
             break;

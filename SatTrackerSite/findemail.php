@@ -3,16 +3,20 @@
 
 //Set variables when button is clicked
 if(isset($_POST['submit'])){
-    $email = $_POST['email'];
+    $username = $_POST['username'];
     $security_answer = $_POST['security_answer'];
     $new_password = $_POST['new_password'];
     $conf_new_pass = $_POST['newconfirm_password'];
 }
 
-//Connect to the DB 
+/*Connect to the DB 
 define("host", "localhost:3307");
 define("db_user", "root");
 define("pass", "");
+define("db", "users"); */
+define("host", "sattrack.ckiq4qoeqhbu.us-east-2.rds.amazonaws.com");
+define("db_user", "admin");
+define("pass", "SatTracker23");
 define("db", "users");
 
 
@@ -32,27 +36,27 @@ if($new_password != $conf_new_pass){
 
 
 //Selecting columns from table
-$query2 = "SELECT name, email, security_question, security_answer from info";
+$query2 = "SELECT name, username, security_question, security_answer from info";
 
 //Query the table
-$email_check = mysqli_query($con3, $query2);
-if($email_check->num_rows > 0){
+$user_check = mysqli_query($con3, $query2);
+if($user_check->num_rows > 0){
    
-    while($row = mysqli_fetch_assoc($email_check)){
+    while($row = mysqli_fetch_assoc($user_check)){
         //Check if email matches input
-        if($email == $row["email"] && $security_answer == $row["security_answer"]){
+        if($username == $row["username"] && $security_answer == $row["security_answer"]){
             //Copy data from database
             $name = $row["name"];
-            $email = $row["email"];
+            $username = $row["username"];
             $security_question = $row["security_question"];
             $security_answer = $row["security_answer"];
 
             //Delete account from DB
-            $deleteold = "DELETE from info where email='".mysqli_real_escape_string($con3, $email)."'";
+            $deleteold = "DELETE from info where username='".mysqli_real_escape_string($con3, $username)."'";
             $del = mysqli_query($con3, $deleteold);
 
             //Insert new password with account info into table
-            $holdsql = "INSERT INTO info (name, email, password, security_question, security_answer) VALUES ('".mysqli_real_escape_string($con3, $name)."', '".mysqli_real_escape_string($con3, $email)."', '".mysqli_real_escape_string($con3, $new_password)."', '".mysqli_real_escape_string($con3, $security_question)."', '".mysqli_real_escape_string($con3, $security_answer)."')";
+            $holdsql = "INSERT INTO info (name, username, password, security_question, security_answer) VALUES ('".mysqli_real_escape_string($con3, $name)."', '".mysqli_real_escape_string($con3, $username)."', '".mysqli_real_escape_string($con3, $new_password)."', '".mysqli_real_escape_string($con3, $security_question)."', '".mysqli_real_escape_string($con3, $security_answer)."')";
             $rs2 = mysqli_query($con3, $holdsql);
             if($rs2) {
                 echo "entries added!";
@@ -61,7 +65,7 @@ if($email_check->num_rows > 0){
             break;
         }
         else{
-            echo "Email not found";
+            echo "Username not found";
             header("location: error.html");
         }
         
