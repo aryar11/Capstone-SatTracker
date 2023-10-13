@@ -69,14 +69,13 @@ def importToSQL(line_iterator, tableName):
             latitude = float(subpoint.latitude.degrees)
             longitude = float(subpoint.longitude.degrees)
             altitude = float(subpoint.elevation.km)
-            #print(latitude,longitude, altitude)
             query = """
-            INSERT INTO {} (satName, satCat, intlDesignator, elSetEpoch, firstTimeDeriv, secondTimeDeriv, bDragTerm, elSetType, elementNum, orbitInclination, rightAscending, eccentricity, perigee, anomaly, meanMotion, satOrder, lat, lng, alt)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO {} (satName, satCat, intlDesignator, elSetEpoch, firstTimeDeriv, secondTimeDeriv, bDragTerm, elSetType, elementNum, orbitInclination, rightAscending, eccentricity, perigee, anomaly, meanMotion, satOrder, lat, lng, alt, line1, line2, line3)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """.format(tableName)
 
             # Values to insert into the table as a tuple
-            values = (satName, satCat, intlDesignator, elSetEpoch, firstTimeDeriv, secondTimeDeriv, bDragTerm, elSetType, elementNum, orbitInclination, rightAscending, eccentricity, perigee, anomaly, meanMotion, satOrder, latitude, longitude, altitude)
+            values = (satName, satCat, intlDesignator, elSetEpoch, firstTimeDeriv, secondTimeDeriv, bDragTerm, elSetType, elementNum, orbitInclination, rightAscending, eccentricity, perigee, anomaly, meanMotion, satOrder, latitude, longitude, altitude, line1, line2, line3)
             
             try:
                 # Execute the query

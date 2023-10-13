@@ -229,7 +229,7 @@ DAT.Globe = function(container, colorFn) {
     point.position.x = r * Math.sin(phi) * Math.cos(theta);
     point.position.y = r * Math.cos(phi);
     point.position.z = r * Math.sin(phi) * Math.sin(theta);
-    point.scale.set(2, 2, 2);  // CHANGES SIZE OF DOTS !!!
+    point.scale.set(1, 1, 1);  // CHANGES SIZE OF DOTS !!!
     point.lat = lat;
     point.lng = lng;
     point.size = size*30;
@@ -377,7 +377,7 @@ function onClick(event) {
 
   function zoom(delta) {
     distanceTarget -= delta;
-    distanceTarget = distanceTarget > 1000 ? 1000 : distanceTarget;
+    distanceTarget = distanceTarget > 2000 ? 2000 : distanceTarget;
     distanceTarget = distanceTarget < 350 ? 350 : distanceTarget;
   }
 
