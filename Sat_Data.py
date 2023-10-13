@@ -13,56 +13,33 @@ def connect_to_rds():
     return connection
 
 def fetch_tles():
-    satellite_data = []
+    satellite_data = []  # Create an empty list to store all satellite data
     connection = connect_to_rds()
     try:
         with connection.cursor() as cursor:
             # List of tables representing satellite categories
-            satellite_tables = ["LEO", "MEO", "oneweb", "starlink", "thorad", "tle"]
+            satellite_tables = ["tle", "LEO", "MEO", "oneweb", "starlink", "thorad"]
             
             for table_name in satellite_tables:
-                satellites_for_category = []
-                sql_query = f"SELECT lat, lng, alt, satName FROM SatTracker.{table_name} LIMIT 1" #cange 1 to whatever you want
-                
+                sql_query = f"SELECT lat, lng, alt, satName FROM SatTracker.{table_name} LIMIT 10000"
                 cursor.execute(sql_query)
-                
                 results = cursor.fetchall()
+                satellites_for_category = []
+
                 for result in results:
-                    for result in results:
-                     lat = float(result['lat'])   #LEO is stored as strings, covert to floats
-                     lon = float(result['lng'])
-                     alt = float(result['alt'])
+                    lat = float(result['lat'])
+                    lon = float(result['lng'])
+                    alt = float(result['alt'])
                     name = result['satName']
-                    entry = [lat, lon, alt, name]
-                    satellites_for_category.append(entry)
+                    satellites_for_category.extend([lat, lon, alt, name])
 
-
-                satellite_data.append([table_name] + satellites_for_category) #removes extra bracket from the list
-
+                satellite_data.append([table_name, satellites_for_category])
 
         # Output to a JSON file
         with open("satellites.json", "w") as json_file:
-            json_file.write('[')  # Start of the main list
-            for category_data in satellite_data:
-                category_name = category_data[0]
-                satellites = category_data[1]
-
-                # Write the category name
-                json_file.write(f'\n["{category_name}",')
-                
-                # Write all satellites for this category in a single line
-                json_file.write(json.dumps(satellites))
-
-                # Add a comma to separate from the next category (if there is one)
-                if category_data != satellite_data[-1]:
-                    json_file.write('],')
-                else:
-                    json_file.write(']')
-            json_file.write('\n]')  # End of the main list
+            json.dump(satellite_data, json_file, indent=4)
 
     finally:
         connection.close()
 
 fetch_tles()
-
-

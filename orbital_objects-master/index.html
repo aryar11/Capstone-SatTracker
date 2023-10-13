@@ -144,8 +144,13 @@
 </div>
 
 <div id="currentInfo">     
+<span id="tle" class="satellite">Bulk TLE</span>
 <span id="LEO" class="satellite">LEO</span>
 <span id="MEO" class="satellite">MEO</span>
+<span id="starlink" class="satellite">Starlink</span>
+<span id="thorad" class="satellite">Thorad</span>
+<span id="oneweb" class="satellite">Oneweb</span>
+
 <br /><br /> <br /><br />
 Use Up and down arrows zoom in and out. Use the mouse to rotate.<br /><br />Source data provided by <a href="http://wwwspace-track.org">Space-Track.org</a>.</div>
 <div id="popup" style="display: none; position: absolute; background-color: rgba(0, 0, 0, 0.7); color: white; padding: 10px;"></div>
@@ -193,7 +198,7 @@ Use Up and down arrows zoom in and out. Use the mouse to rotate.<br /><br />Sour
   // Event listener for MEO click
   var meoElement = document.getElementById('MEO');
   meoElement.addEventListener('click', function() {
-    currentIndex = 1; // Update the index to load data[1][1]
+    currentIndex = 2; // Update the index to load data[1][1]
     loadDataAndUpdateGlobe(currentIndex);
     var activeElements = document.querySelectorAll('.active');
     for (var i = 0; i < activeElements.length; i++) {
@@ -205,7 +210,7 @@ Use Up and down arrows zoom in and out. Use the mouse to rotate.<br /><br />Sour
 
   var leoElement = document.getElementById('LEO');
   leoElement.addEventListener('click', function() {
-    currentIndex = 0; // Update the index to load data[0][1]
+    currentIndex = 1; // Update the index to load data[0][1]
     loadDataAndUpdateGlobe(currentIndex);
     //Clear active
     var activeElements = document.querySelectorAll('.active');
@@ -216,6 +221,59 @@ Use Up and down arrows zoom in and out. Use the mouse to rotate.<br /><br />Sour
     leoElement.classList.add('active');
   });
 
+
+  var tleElement = document.getElementById('tle');
+  tleElement.classList.add('active');
+  tleElement.addEventListener('click', function() {
+    currentIndex = 0; // Update the index to load data[0][1]
+    loadDataAndUpdateGlobe(currentIndex);
+    //Clear active
+    var activeElements = document.querySelectorAll('.active');
+    for (var i = 0; i < activeElements.length; i++) {
+      activeElements[i].classList.remove('active');
+    }
+    // Add 'active' to the 'tle' 
+    tleElement.classList.add('active');
+  });
+
+  var starlinkElement = document.getElementById('starlink');
+  starlinkElement.addEventListener('click', function() {
+    currentIndex = 4; // Update the index to load data[0][1]
+    loadDataAndUpdateGlobe(currentIndex);
+    //Clear active
+    var activeElements = document.querySelectorAll('.active');
+    for (var i = 0; i < activeElements.length; i++) {
+      activeElements[i].classList.remove('active');
+    }
+    // Add 'active' to the 'tle' 
+    starlinkElement.classList.add('active');
+  });
+
+  var thoradelement = document.getElementById('thorad');
+  thoradelement.addEventListener('click', function() {
+    currentIndex = 5; // Update the index to load data[0][1]
+    loadDataAndUpdateGlobe(currentIndex);
+    //Clear active
+    var activeElements = document.querySelectorAll('.active');
+    for (var i = 0; i < activeElements.length; i++) {
+      activeElements[i].classList.remove('active');
+    }
+    // Add 'active' to the 'tle' 
+    thoradelement.classList.add('active');
+  });
+
+  var onewebelement = document.getElementById('oneweb');
+  onewebelement.addEventListener('click', function() {
+    currentIndex = 3; // Update the index to load data[0][1]
+    loadDataAndUpdateGlobe(currentIndex);
+    //Clear active
+    var activeElements = document.querySelectorAll('.active');
+    for (var i = 0; i < activeElements.length; i++) {
+      activeElements[i].classList.remove('active');
+    }
+    // Add 'active' to the 'tle' 
+    onewebelement.classList.add('active');
+  });
   // Function to clear the globe
   function clearGlobe() {
     if (globe.points) {

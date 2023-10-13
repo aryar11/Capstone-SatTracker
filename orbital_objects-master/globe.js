@@ -18,7 +18,7 @@ var GLOBE_RADIUS = 75;
 DAT.Globe = function(container, colorFn) {
 
   colorFn = colorFn || function(x) {
-    var normalC = x / 30000
+    var normalC = x / 100000
     var c = new THREE.Color();
     c.setHSL( ( 0.6 - ( normalC * 0.5 ) ), 1.0, 0.5 );
     console.log(c.getHex());
@@ -229,22 +229,33 @@ DAT.Globe = function(container, colorFn) {
     point.position.x = r * Math.sin(phi) * Math.cos(theta);
     point.position.y = r * Math.cos(phi);
     point.position.z = r * Math.sin(phi) * Math.sin(theta);
-    point.scale.set(4, 4, 4);  // CHANGES SIZE OF DOTS !!!
+    point.scale.set(2, 2, 2);  // CHANGES SIZE OF DOTS !!!
     point.lat = lat;
     point.lng = lng;
     point.size = size*30;
     point.lookAt(mesh.position);
+//  point.scale.z = Math.max( size, 0.1 );
+    // Create a custom data object to store point information
+    var pointData = {
+      lat: lat,
+      lng: lng,
+      size: size * 30,
+      color: color};
 
-//    point.scale.z = Math.max( size, 0.1 );
+    // Attach the custom data object to the point
+    point.geometry.name = "TEST123";
+
     point.updateMatrix();
 
+    //console.log(point.userData)
+
     for (var i = 0; i < point.geometry.faces.length; i++) {
-
       point.geometry.faces[i].color = color;
-
     }
 
-    THREE.GeometryUtils.merge(subgeo, point);
+    subgeo.merge(point.geometry, point.matrix);
+    //console.log(point.geometry)
+    //console.log(point.matrix)
   }
 
 // Add an event listener for mouse clicks on the container
@@ -266,16 +277,18 @@ function onClick(event) {
     raycaster.ray.origin.copy(camera.position);
     raycaster.ray.direction.set(mouseVector.x, mouseVector.y, 0.5).unproject(camera).sub(camera.position).normalize();
 
-        // Find intersected objects
+    // Find intersected objects
     var intersects = raycaster.intersectObject(globe.points);
-
+    //console.log(intersects)
     if (intersects.length > 0) {
         // Get the clicked point's data (you may need to adjust this depending on your data structure)
         var clickedData = window.data[intersects[0].faceIndex];
+        //console.log(intersects)
+        //console.log(globe.points)
 
         // Display the pop-up box with the point's information
         var popup = document.getElementById('popup');
-        popup.innerHTML = "Latitude: " + clickedData.lat + "<br>Longitude: " + clickedData.lng + "<br>Size: " + clickedData.size;
+        popup.innerHTML = "Latitude: " + clickedData + "<br>Longitude: " + clickedData.lng + "<br>Size: " + clickedData.size;
         popup.style.left = event.clientX + 'px';
         popup.style.top = event.clientY + 'px';
         popup.style.display = 'block';
@@ -285,17 +298,11 @@ function onClick(event) {
             popup.style.display = 'none';
         });
     }
+    else{
+      var popup = document.getElementById('popup');
+      popup.style.display = 'none';
+    }
 }
-
-
-
-
-
-
-
-
-
-
 
 
 
