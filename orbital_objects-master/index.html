@@ -162,6 +162,7 @@ Use Up and down arrows zoom in and out. Use the mouse to rotate.<br /><br />Sour
 <script type="text/javascript" src="third-party/new_three_min.js"></script>
 <script type="text/javascript" src="globe.js"></script>
 <script type="text/javascript" src="third-party/Tween.js"></script>
+<script src="https://sdk.amazonaws.com/js/aws-sdk-2.1135.0.min.js"></script>
 <script type="text/javascript">
 
   var globe = DAT.Globe(document.getElementById('container'), function(label) {
@@ -191,15 +192,49 @@ Use Up and down arrows zoom in and out. Use the mouse to rotate.<br /><br />Sour
     };
     xhr.send(null);
   }
+  function loadDataAndUpdateGlobe1(index) {
+  // Initialize the AWS SDK
+  AWS.config.update({
+    accessKeyId: 'AKIA2GBQBRJE53N4XPM3',
+    secretAccessKey: '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',
+    region: 'us-east-2',
+  });
 
+  // Create an S3 object
+  var s3 = new AWS.S3();
+
+  // Specify the S3 bucket and object (JSON file) key
+  var bucketName = 'satdate';
+  var objectKey = 'test.json';
+
+  // Use the getObject method to retrieve the JSON file
+  s3.getObject({ Bucket: bucketName, Key: objectKey }, function (err, data) {
+    if (err) {
+      console.error('Error loading JSON file from S3:', err);
+    } else {
+      var jsonContent = data.Body.toString('utf-8');
+      var jsonData = JSON.parse(jsonContent);
+
+      if (jsonData[index] && jsonData[index][1]) {
+        console.log(jsonData[index]);
+        window.data = jsonData[index][1];
+        clearGlobe();
+        globe.addData(jsonData[index][1], { format: 'magnitude' });
+        globe.createPoints();
+        globe.animate();
+        document.body.style.backgroundImage = 'none'; // Remove loading
+      }
+    }
+  });
+  }
   // Initial data load
-  loadDataAndUpdateGlobe(currentIndex);
+  loadDataAndUpdateGlobe1(currentIndex);
 
   // Event listener for MEO click
   var meoElement = document.getElementById('MEO');
   meoElement.addEventListener('click', function() {
     currentIndex = 2; // Update the index to load data[1][1]
-    loadDataAndUpdateGlobe(currentIndex);
+    loadDataAndUpdateGlobe1(currentIndex);
     var activeElements = document.querySelectorAll('.active');
     for (var i = 0; i < activeElements.length; i++) {
       activeElements[i].classList.remove('active');
@@ -211,7 +246,7 @@ Use Up and down arrows zoom in and out. Use the mouse to rotate.<br /><br />Sour
   var leoElement = document.getElementById('LEO');
   leoElement.addEventListener('click', function() {
     currentIndex = 1; // Update the index to load data[0][1]
-    loadDataAndUpdateGlobe(currentIndex);
+    loadDataAndUpdateGlobe1(currentIndex);
     //Clear active
     var activeElements = document.querySelectorAll('.active');
     for (var i = 0; i < activeElements.length; i++) {
@@ -226,7 +261,7 @@ Use Up and down arrows zoom in and out. Use the mouse to rotate.<br /><br />Sour
   tleElement.classList.add('active');
   tleElement.addEventListener('click', function() {
     currentIndex = 0; // Update the index to load data[0][1]
-    loadDataAndUpdateGlobe(currentIndex);
+    loadDataAndUpdateGlobe1(currentIndex);
     //Clear active
     var activeElements = document.querySelectorAll('.active');
     for (var i = 0; i < activeElements.length; i++) {
@@ -239,7 +274,7 @@ Use Up and down arrows zoom in and out. Use the mouse to rotate.<br /><br />Sour
   var starlinkElement = document.getElementById('starlink');
   starlinkElement.addEventListener('click', function() {
     currentIndex = 4; // Update the index to load data[0][1]
-    loadDataAndUpdateGlobe(currentIndex);
+    loadDataAndUpdateGlobe1(currentIndex);
     //Clear active
     var activeElements = document.querySelectorAll('.active');
     for (var i = 0; i < activeElements.length; i++) {
@@ -252,7 +287,7 @@ Use Up and down arrows zoom in and out. Use the mouse to rotate.<br /><br />Sour
   var thoradelement = document.getElementById('thorad');
   thoradelement.addEventListener('click', function() {
     currentIndex = 5; // Update the index to load data[0][1]
-    loadDataAndUpdateGlobe(currentIndex);
+    loadDataAndUpdateGlobe1(currentIndex);
     //Clear active
     var activeElements = document.querySelectorAll('.active');
     for (var i = 0; i < activeElements.length; i++) {
@@ -265,7 +300,7 @@ Use Up and down arrows zoom in and out. Use the mouse to rotate.<br /><br />Sour
   var onewebelement = document.getElementById('oneweb');
   onewebelement.addEventListener('click', function() {
     currentIndex = 3; // Update the index to load data[0][1]
-    loadDataAndUpdateGlobe(currentIndex);
+    loadDataAndUpdateGlobe1(currentIndex);
     //Clear active
     var activeElements = document.querySelectorAll('.active');
     for (var i = 0; i < activeElements.length; i++) {
