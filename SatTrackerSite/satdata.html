@@ -46,30 +46,34 @@
 
 
     <div class="satdata">
-        <div class="tabletitle">
-            <h1>Satellite Data</h1>
+        <form action="https://jj24lfb5zg.execute-api.us-east-2.amazonaws.com/default/satData" method="get">
+            <div class="tabletitle">
+             <h1>Satellite Data</h1>
+            </div>
+            <div class="Data_drop">
+             <label>Select Data</label>
+                <select name="datatable" id="DT">
+                    <option value="LEO">LEO</option>
+                    <option value="MEO">MEO</option>
+                    <option value="Starlink">Starlink</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <input type="submit" name="submit" class="regbtn" value="Generate">
+            </div>
+            <table>
+                <tr>
+                    <th>Sat Name</th>
+                    <th>SatCat ID</th>
+                    <th>Latitude</th>
+                    <th>Longitude</th>
+                    <th>Altitude</th>
+                    <th></th>
+                </tr>
+            </table>
+        </form>
+        
+    
         </div>
-        <div class="Data_drop">
-            <label>Select Data</label>
-            <select name="datatable" id="DT">
-                <option value="LEO">LEO</option>
-                <option value="MEO">MEO</option>
-                <option value="Starlink">Starlink</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <input type="submit" name="submit" class="regbtn" value="Generate">
-        </div>
-        <table>
-            <tr>
-                <th>Sat Name</th>
-                <th>SatCat ID</th>
-                <th>Latitude</th>
-                <th>Longitude</th>
-                <th>Altitude</th>
-                <th></th>
-            </tr>
-        </table>
-    </div>
     </body>
     </html>
