@@ -1,4 +1,4 @@
-unction onClick(event) {
+function onClick(event) {
   event.preventDefault();
 
   var raycaster = new THREE.Raycaster();
@@ -13,31 +13,38 @@ unction onClick(event) {
       .sub(camera.position)
       .normalize();
 
-  var intersects = raycaster.intersectObject(globe.points);
- console.log("Intersections found:", intersects.length);
+  var intersects = raycaster.intersectObjects(satelliteCubes);  // Check for intersection with all cubes in satelliteCubes array
+  console.log("Intersections found:", intersects.length);
 
+  if (intersects.length > 0) {
+    var clickedCube = intersects[0].object;
 
- if (intersects.length > 0) {
-  var faceIndex = intersects[0].faceIndex; // This gets the face index
-  console.log('Face Index:', faceIndex);
+    // If there was a previously clicked satellite, revert its color
+    if (lastClickedSatellite) {
+      lastClickedSatellite.material.color.set(0xffffff); //the original color is white
+    }
 
-  // Calculate the satellite index based on faceIndex
-  var satelliteIndex = Math.floor(faceIndex / 12);
+    // Change color of the clicked cube to red
+    clickedCube.material.color.set(0xff0000);
 
-  if (satelliteIndex * 4 + 3 < window.data.length) {
-    var rawLat = parseFloat(window.data[satelliteIndex * 4]);
-    var rawLng = parseFloat(window.data[satelliteIndex * 4 + 1]);
-    var rawAlt = parseFloat(window.data[satelliteIndex * 4 + 2]);
-    var name = window.data[satelliteIndex * 4 + 3] || "-";
-    
-    document.getElementById('latValue').textContent = rawLat.toFixed(3) + '°';
-    document.getElementById('lngValue').textContent = rawLng.toFixed(3) + '°';
-    document.getElementById('altValue').textContent = rawAlt.toFixed(3) + ' KM';
-    document.getElementById('nameValue').textContent = name;
-  } else {
-    console.error("Invalid satellite index derived from faceIndex:", satelliteIndex);
-    console.log(intersects[0].object); // Logs the entire object that was intersected
+    // Update the lastClickedSatellite reference
+    lastClickedSatellite = clickedCube;
 
+    var satelliteIndex = satelliteCubes.indexOf(clickedCube);  // Get the index of the clicked cube within the satelliteCubes array
+
+    if (satelliteIndex * 4 + 3 < window.data.length) {
+      var rawLat = parseFloat(window.data[satelliteIndex * 4]);
+      var rawLng = parseFloat(window.data[satelliteIndex * 4 + 1]);
+      var rawAlt = parseFloat(window.data[satelliteIndex * 4 + 2]);
+      var name = window.data[satelliteIndex * 4 + 3] || "-";
+      
+      document.getElementById('latValue').textContent = rawLat.toFixed(3) + '°';
+      document.getElementById('lngValue').textContent = rawLng.toFixed(3) + '°';
+      document.getElementById('altValue').textContent = rawAlt.toFixed(3) + ' KM';
+      document.getElementById('nameValue').textContent = name;
+    } else {
+      console.error("Invalid satellite index:", satelliteIndex);
+      console.log(clickedCube); // Logs the entire clicked cube object
+    }
   }
-}
 }
