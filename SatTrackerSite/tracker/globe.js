@@ -14,7 +14,8 @@
 var DAT = DAT || {};
 
 var GLOBE_RADIUS = 75;
-
+var satelliteCubes = [];
+let lastClickedSatellite = null; 
 DAT.Globe = function(container, colorFn) {
 
   colorFn = colorFn || function(x) {
@@ -108,7 +109,7 @@ DAT.Globe = function(container, colorFn) {
     shader = Shaders['earth'];
     uniforms = THREE.UniformsUtils.clone(shader.uniforms);
 
-    uniforms['texture'].value = THREE.ImageUtils.loadTexture(imgDir+'world.jpg');
+    uniforms['texture'].value = THREE.ImageUtils.loadTexture('world.jpg');
 
     material = new THREE.ShaderMaterial({
 
@@ -221,89 +222,84 @@ DAT.Globe = function(container, colorFn) {
   }
 
   function addPoint(lat, lng, size, color, subgeo) {
-
     var phi = (90 - lat) * Math.PI / 180;
     var theta = (180 - lng) * Math.PI / 180;
     var r = ((1 + (size / 100.0)) * GLOBE_RADIUS);
-
-    point.position.x = r * Math.sin(phi) * Math.cos(theta);
-    point.position.y = r * Math.cos(phi);
-    point.position.z = r * Math.sin(phi) * Math.sin(theta);
-    point.scale.set(2, 2, 2);  // CHANGES SIZE OF DOTS !!!
-    point.lat = lat;
-    point.lng = lng;
-    point.size = size*30;
-    point.lookAt(mesh.position);
-//  point.scale.z = Math.max( size, 0.1 );
-    // Create a custom data object to store point information
-    var pointData = {
-      lat: lat,
-      lng: lng,
-      size: size * 30,
-      color: color};
-
-    // Attach the custom data object to the point
-    point.geometry.name = "TEST123";
-
-    point.updateMatrix();
-
-    //console.log(point.userData)
-
-    for (var i = 0; i < point.geometry.faces.length; i++) {
-      point.geometry.faces[i].color = color;
-    }
-
-    subgeo.merge(point.geometry, point.matrix);
-    //console.log(point.geometry)
-    //console.log(point.matrix)
+  
+    // Create a cube for this point
+    var geometry = new THREE.BoxGeometry(1, 1, 1);
+    var material = new THREE.MeshBasicMaterial({ color: color }); // Use the given color
+    var cube = new THREE.Mesh(geometry, material);
+  
+    cube.position.x = r * Math.sin(phi) * Math.cos(theta);
+    cube.position.y = r * Math.cos(phi);
+    cube.position.z = r * Math.sin(phi) * Math.sin(theta);
+    cube.scale.set(2, 2, 2);  // Scale the cube
+    cube.lookAt(mesh.position); // Make the cube look at the mesh (globe center)
+    cube.updateMatrix();
+  
+    scene.add(cube);  // Add the cube to the scene
+    satelliteCubes.push(cube); // Add the cube to the satelliteCubes array
+  
+    
+    // THREE.GeometryUtils.merge(subgeo, point);
   }
+  
+  
 
 // Add an event listener for mouse clicks on the container
 container.addEventListener('click', onClick, false);
 
 function onClick(event) {
-    event.preventDefault();
+  event.preventDefault();
 
-    // Get the mouse click coordinates
-    var mouseX = (event.clientX / window.innerWidth) * 2 - 1;
-    var mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+  var raycaster = new THREE.Raycaster();
+  var mouseVector = new THREE.Vector2(
+      (event.clientX / window.innerWidth) * 2 - 1,
+      -(event.clientY / window.innerHeight) * 2 + 1
+  );
 
-    // Create a raycaster to detect intersections with 3D objects
-    // Inside your onClick function
-    var raycaster = new THREE.Raycaster();
-    var mouseVector = new THREE.Vector2(mouseX, mouseY);
+  raycaster.ray.origin.copy(camera.position);
+  raycaster.ray.direction.set(mouseVector.x, mouseVector.y, 0.5)
+      .unproject(camera)
+      .sub(camera.position)
+      .normalize();
 
-    // Get the ray's origin and direction
-    raycaster.ray.origin.copy(camera.position);
-    raycaster.ray.direction.set(mouseVector.x, mouseVector.y, 0.5).unproject(camera).sub(camera.position).normalize();
+  var intersects = raycaster.intersectObjects(satelliteCubes);  // Check for intersection with all cubes in satelliteCubes array
+  console.log("Intersections found:", intersects.length);
 
-    // Find intersected objects
-    var intersects = raycaster.intersectObject(globe.points);
-    //console.log(intersects)
-    if (intersects.length > 0) {
-        // Get the clicked point's data (you may need to adjust this depending on your data structure)
-        var clickedData = window.data[intersects[0].faceIndex];
-        //console.log(intersects)
-        //console.log(globe.points)
+  if (intersects.length > 0) {
+    var clickedCube = intersects[0].object;
 
-        // Display the pop-up box with the point's information
-        var popup = document.getElementById('popup');
-        popup.innerHTML = "Latitude: " + clickedData + "<br>Longitude: " + clickedData.lng + "<br>Size: " + clickedData.size;
-        popup.style.left = event.clientX + 'px';
-        popup.style.top = event.clientY + 'px';
-        popup.style.display = 'block';
-
-        // Add a click event listener to close the pop-up box
-        popup.addEventListener('click', function() {
-            popup.style.display = 'none';
-        });
+    // If there was a previously clicked satellite, revert its color
+    if (lastClickedSatellite) {
+      lastClickedSatellite.material.color.set(0xffffff); //the original color is white
     }
-    else{
-      var popup = document.getElementById('popup');
-      popup.style.display = 'none';
+
+    // Change color of the clicked cube to red
+    clickedCube.material.color.set(0xff0000);
+
+    // Update the lastClickedSatellite reference
+    lastClickedSatellite = clickedCube;
+
+    var satelliteIndex = satelliteCubes.indexOf(clickedCube);  // Get the index of the clicked cube within the satelliteCubes array
+
+    if (satelliteIndex * 4 + 3 < window.data.length) {
+      var rawLat = parseFloat(window.data[satelliteIndex * 4]);
+      var rawLng = parseFloat(window.data[satelliteIndex * 4 + 1]);
+      var rawAlt = parseFloat(window.data[satelliteIndex * 4 + 2]);
+      var name = window.data[satelliteIndex * 4 + 3] || "-";
+      
+      document.getElementById('latValue').textContent = rawLat.toFixed(3) + '°';
+      document.getElementById('lngValue').textContent = rawLng.toFixed(3) + '°';
+      document.getElementById('altValue').textContent = rawAlt.toFixed(3) + ' KM';
+      document.getElementById('nameValue').textContent = name;
+    } else {
+      console.error("Invalid satellite index:", satelliteIndex);
+      console.log(clickedCube); // Logs the entire clicked cube object
     }
+  }
 }
-
 
 
   function onMouseDown(event) {
@@ -377,7 +373,7 @@ function onClick(event) {
 
   function zoom(delta) {
     distanceTarget -= delta;
-    distanceTarget = distanceTarget > 1000 ? 1000 : distanceTarget;
+    distanceTarget = distanceTarget > 2000 ? 2000 : distanceTarget;
     distanceTarget = distanceTarget < 350 ? 350 : distanceTarget;
   }
 
