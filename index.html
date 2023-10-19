@@ -124,6 +124,7 @@
 
         cursor: pointer;
         -webkit-transition: all 0.1s ease-out;
+        
     }
   </style>
 </head>
@@ -131,7 +132,37 @@
 
 <div id="container"></div>
 <div id="popup" style="display: none; position: absolute; background-color: rgba(0, 0, 0, 0.7); color: white; padding: 10px;"></div>
-
+   <!--Navbar-->
+<nav class="navbar">
+    <div class="navbar_cont">
+        <a href="index.html" id="navbar_logo">
+            <!--<i class="fas fa-gem"></i> SatTracker</a>-->
+            <div class="logo_img">
+                <img src="images/SatTrackerlogo.jpg"
+                alt="pic" class="image" id="logo_img" width= 40%/>
+            </div>
+        
+        <ul class="navbar_menu">
+            <li class="navbar_item">
+                <a href="index.html" class="navbar_links"> Home </a>
+            </li>
+            <!--<li class="navbar_item">
+                <a href="tracker.html" class="navbar_links">
+                    Tracker
+                </a>
+            </li> -->
+            <li class="navbar_item">
+                <a href="about.html" class="navbar_links"> About </a>
+            </li>
+            
+            <li class="navbar_btn2">
+                <a href="login.html" class="button">
+                    Log In
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
 <div id="info">
   The <a href="http://www.chromeexperiments.com/globe">WebGL Globe</a> is an
   open platform for visualizing geographic data. <span

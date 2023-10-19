@@ -8,6 +8,102 @@
       height: 100%;
     }
 
+    /* NAVBAR Setup*/
+.navbar{
+    background: black;
+    height: 120px;
+    display: flex; 
+    justify-content: center;
+    align-items: center;
+    font-size: 1.2rem;
+    position: sticky;
+    top: 0;
+    z-index: 999;
+
+}
+
+.navbar_cont {
+    display: flex;
+    justify-content: space-between;
+    height: 80px; 
+    z-index: 1;
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 50px;
+}
+
+#navbar_logo {
+    background-color: blue;
+    background-size: 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -moz-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    -moz-text-fill-color: transparent;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 4rem;
+}
+
+.logo_img{
+  
+  display: flex;
+  
+  
+}
+
+
+.navbar_menu{
+    display: flex;
+    align-items: center;
+    list-style: none;
+    text-align: center;
+}
+
+.navbar_item {
+    height: 80px;
+}
+
+.navbar_links{
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    padding: 0 1rem;
+    height: 100%;
+}
+
+.button{
+    display: flex;
+    justify-content: center;
+    align-items: center; 
+    text-decoration: none;
+    cursor: pointer;
+    padding: 10px 20px;
+    height: 100%;
+    width: 100%;
+    border: none;
+    outline: none; 
+    border-radius: 4px;
+    background: blue;
+    color: #fff;
+    margin: 5;
+}
+
+.button:hover{
+    background: #4837ff;
+    transition: all 0.3s ease;
+}
+
+.navbar_links:hover{
+    color: blue;
+    transition: all 0.3s ease;
+}
+
     body {
       margin: 0;
       padding: 0;
@@ -27,7 +123,9 @@
       background-color: rgba(0, 0, 0, 0.8);
       border-radius: 3px;
       right: 10px;
-      padding: 10px;
+      padding: 10px ;
+      
+      
 
     }
 
@@ -47,7 +145,7 @@
 
     #title {
       position: absolute;
-      top: 20px;
+      top: 110px;
       width: 320px;
       left: 20px;
       background-color: rgba(0, 0, 0, 0.2);
@@ -59,7 +157,7 @@
         width: 270px;
         position: absolute;
         left: 20px;
-        top: 63px;
+        top: 180px;
 
         background-color: rgba(0,0,0,0.2);
 
@@ -125,9 +223,41 @@
         cursor: pointer;
         -webkit-transition: all 0.1s ease-out;
     }
+    
   </style>
 </head>
 <body>
+
+  <!--Navbar-->
+  <nav class="navbar">
+    <div class="navbar_cont">
+        <a href="indexin.html" id="navbar_logo">
+            <!--<i class="fas fa-gem"></i> SatTracker</a>-->
+            <div class="logo_img">
+                <img src="../images/SatTrackerlogo.jpg"
+                alt="pic" class="image" id="logo_img" width= 40%/>
+            </div>
+        
+        <ul class="navbar_menu">
+            <li class="navbar_item">
+                <a href="../indexin.html" class="navbar_links"> Home </a>
+            </li>
+
+            <li class="navbar_item">
+              <a href="#" class="navbar_links">Tracker</a>
+            </li>
+        
+            <li class="navbar_item">
+                <a href="../about-in.html" class="navbar_links"> About </a>
+            </li>
+            <li class="navbar_btn2">
+                <a href="../index.html" class="button">
+                    Log Out
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
 
 <div id="container"></div>
 <div id="popup" style="display: none; position: absolute; background-color: rgba(0, 0, 0, 0.7); color: white; padding: 10px;"></div>
@@ -149,8 +279,31 @@
 <span id="MEO" class="satellite">MEO</span>
 <span id="starlink" class="satellite">Starlink</span>
 <span id="thorad" class="satellite">Thorad</span>
-<span id="oneweb" class="satellite">Oneweb</span>
+<span id="oneweb" class="satellite">Oneweb</span>  
 
+  <div id="satelliteData">
+    <h3>Selected Satellite</h3>
+    <table>
+        <tbody>
+            <tr>
+                <td>Latitude:</td>
+                <td id="latValue">-</td>
+            </tr>
+            <tr>
+                <td>Longitude:</td>
+                <td id="lngValue">-</td>
+            </tr>
+            <tr>
+                <td>Altitude:</td>
+                <td id="altValue">-</td>
+            </tr>
+            <tr>
+                <td>Name:</td>
+                <td id="nameValue">-</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
 <br /><br /> <br /><br />
 Use Up and down arrows zoom in and out. Use the mouse to rotate.<br /><br />Source data provided by <a href="http://wwwspace-track.org">Space-Track.org</a>.</div>
 <div id="popup" style="display: none; position: absolute; background-color: rgba(0, 0, 0, 0.7); color: white; padding: 10px;"></div>
@@ -162,6 +315,7 @@ Use Up and down arrows zoom in and out. Use the mouse to rotate.<br /><br />Sour
 <script type="text/javascript" src="third-party/new_three_min.js"></script>
 <script type="text/javascript" src="globe.js"></script>
 <script type="text/javascript" src="third-party/Tween.js"></script>
+<script src="https://sdk.amazonaws.com/js/aws-sdk-2.1135.0.min.js"></script>
 <script type="text/javascript">
 
   var globe = DAT.Globe(document.getElementById('container'), function(label) {
@@ -191,15 +345,49 @@ Use Up and down arrows zoom in and out. Use the mouse to rotate.<br /><br />Sour
     };
     xhr.send(null);
   }
+  function loadDataAndUpdateGlobe1(index) {
+  // Initialize the AWS SDK
+  AWS.config.update({
+    accessKeyId: 'AKIA2GBQBRJE53N4XPM3',
+    secretAccessKey: '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',
+    region: 'us-east-2',
+  });
 
+  // Create an S3 object
+  var s3 = new AWS.S3();
+
+  // Specify the S3 bucket and object (JSON file) key
+  var bucketName = 'satdate';
+  var objectKey = 'satellites.json';
+
+  // Use the getObject method to retrieve the JSON file
+  s3.getObject({ Bucket: bucketName, Key: objectKey }, function (err, data) {
+    if (err) {
+      console.error('Error loading JSON file from S3:', err);
+    } else {
+      var jsonContent = data.Body.toString('utf-8');
+      var jsonData = JSON.parse(jsonContent);
+
+      if (jsonData[index] && jsonData[index][1]) {
+        console.log(jsonData[index]);
+        window.data = jsonData[index][1];
+        clearGlobe();
+        globe.addData(jsonData[index][1], { format: 'magnitude' });
+        globe.createPoints();
+        globe.animate();
+        document.body.style.backgroundImage = 'none'; // Remove loading
+      }
+    }
+  });
+  }
   // Initial data load
-  loadDataAndUpdateGlobe(currentIndex);
+  loadDataAndUpdateGlobe1(currentIndex);
 
   // Event listener for MEO click
   var meoElement = document.getElementById('MEO');
   meoElement.addEventListener('click', function() {
     currentIndex = 2; // Update the index to load data[1][1]
-    loadDataAndUpdateGlobe(currentIndex);
+    loadDataAndUpdateGlobe1(currentIndex);
     var activeElements = document.querySelectorAll('.active');
     for (var i = 0; i < activeElements.length; i++) {
       activeElements[i].classList.remove('active');
@@ -211,7 +399,7 @@ Use Up and down arrows zoom in and out. Use the mouse to rotate.<br /><br />Sour
   var leoElement = document.getElementById('LEO');
   leoElement.addEventListener('click', function() {
     currentIndex = 1; // Update the index to load data[0][1]
-    loadDataAndUpdateGlobe(currentIndex);
+    loadDataAndUpdateGlobe1(currentIndex);
     //Clear active
     var activeElements = document.querySelectorAll('.active');
     for (var i = 0; i < activeElements.length; i++) {
@@ -226,7 +414,7 @@ Use Up and down arrows zoom in and out. Use the mouse to rotate.<br /><br />Sour
   tleElement.classList.add('active');
   tleElement.addEventListener('click', function() {
     currentIndex = 0; // Update the index to load data[0][1]
-    loadDataAndUpdateGlobe(currentIndex);
+    loadDataAndUpdateGlobe1(currentIndex);
     //Clear active
     var activeElements = document.querySelectorAll('.active');
     for (var i = 0; i < activeElements.length; i++) {
@@ -239,7 +427,7 @@ Use Up and down arrows zoom in and out. Use the mouse to rotate.<br /><br />Sour
   var starlinkElement = document.getElementById('starlink');
   starlinkElement.addEventListener('click', function() {
     currentIndex = 4; // Update the index to load data[0][1]
-    loadDataAndUpdateGlobe(currentIndex);
+    loadDataAndUpdateGlobe1(currentIndex);
     //Clear active
     var activeElements = document.querySelectorAll('.active');
     for (var i = 0; i < activeElements.length; i++) {
@@ -252,7 +440,7 @@ Use Up and down arrows zoom in and out. Use the mouse to rotate.<br /><br />Sour
   var thoradelement = document.getElementById('thorad');
   thoradelement.addEventListener('click', function() {
     currentIndex = 5; // Update the index to load data[0][1]
-    loadDataAndUpdateGlobe(currentIndex);
+    loadDataAndUpdateGlobe1(currentIndex);
     //Clear active
     var activeElements = document.querySelectorAll('.active');
     for (var i = 0; i < activeElements.length; i++) {
@@ -265,7 +453,7 @@ Use Up and down arrows zoom in and out. Use the mouse to rotate.<br /><br />Sour
   var onewebelement = document.getElementById('oneweb');
   onewebelement.addEventListener('click', function() {
     currentIndex = 3; // Update the index to load data[0][1]
-    loadDataAndUpdateGlobe(currentIndex);
+    loadDataAndUpdateGlobe1(currentIndex);
     //Clear active
     var activeElements = document.querySelectorAll('.active');
     for (var i = 0; i < activeElements.length; i++) {
@@ -276,13 +464,29 @@ Use Up and down arrows zoom in and out. Use the mouse to rotate.<br /><br />Sour
   });
   // Function to clear the globe
   function clearGlobe() {
+    console.log("Clearing Globe");
+
+    // Loop through each satellite cube and remove it from the scene
+    for (var i = satelliteCubes.length - 1; i >= 0; i--) {
+        var cube = satelliteCubes[i];
+        globe.scene.remove(cube); // Remove cube from scene
+
+        // Proper cleanup to ensure memory is released
+        cube.geometry.dispose();
+        cube.material.dispose();
+    }
+    satelliteCubes = [];
+    console.log("Satellite cubes cleared");
+
     if (globe.points) {
-      globe.scene.remove(globe.points);
-      globe.points.geometry.dispose();
-      globe.points.material.dispose();
-      globe.points = null;
+        globe.scene.remove(globe.points);
+        globe.points.geometry.dispose();
+        globe.points.material.dispose();
+        globe.points = null;
+        console.log("Globe points cleared");
     }
   }
+
 </script>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

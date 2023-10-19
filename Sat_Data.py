@@ -1,6 +1,7 @@
 import pymysql
 import json
 from skyfield.api import EarthSatellite, Topos, load
+import boto3
 def connect_to_rds():
     connection = pymysql.connect(
         host='sattrack.ckiq4qoeqhbu.us-east-2.rds.amazonaws.com',
@@ -21,7 +22,7 @@ def fetch_tles():
             satellite_tables = ["tle", "LEO", "MEO", "oneweb", "starlink", "thorad"]
             ts = load.timescale()
             for table_name in satellite_tables:
-                sql_query = f"SELECT lat, lng, alt, satName, line1, line2, line3 FROM SatTracker.{table_name} LIMIT 10000"
+                sql_query = f"SELECT lat, lng, alt, satName, line1, line2, line3 FROM SatTracker.{table_name} LIMIT 1000"
                 cursor.execute(sql_query)
                 results = cursor.fetchall()
                 satellites_for_category = []
@@ -41,7 +42,17 @@ def fetch_tles():
         # Output to a JSON file
         with open("satellites.json", "w") as json_file:
             json.dump(satellite_data, json_file, indent=4)
+        #####Importing to bucket######
+        s3 = boto3.client(
+            's3',
+            aws_access_key_id='AKIA2GBQBRJE53N4XPM3',
+            aws_secret_access_key='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'
+        )
+        bucket_name = "satdate"
+        html_file_path = "https://satdate.s3.us-east-2.amazonaws.com/satellites.json"
 
+        #upload the HTML to S3 aws
+        s3.upload_file('satellites.json', bucket_name, 'satellites.json')
     finally:
         connection.close()
 

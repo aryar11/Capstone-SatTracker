@@ -253,42 +253,39 @@ container.addEventListener('click', onClick, false);
 
 //can click the sat, it creates a pop up, but with no information, in the if statement
 function onClick(event) {
-  event.preventDefault();
+    event.preventDefault();
+    // Same logic for raycasting...
+    var raycaster = new THREE.Raycaster();
+    var mouseVector = new THREE.Vector2(
+        (event.clientX / window.innerWidth) * 2 - 1,
+        -(event.clientY / window.innerHeight) * 2 + 1
+    );
 
-  // Same logic for raycasting...
-  var raycaster = new THREE.Raycaster();
-  var mouseVector = new THREE.Vector2(
-      (event.clientX / window.innerWidth) * 2 - 1,
-      -(event.clientY / window.innerHeight) * 2 + 1
-  );
+    raycaster.ray.origin.copy(camera.position);
+    raycaster.ray.direction.set(mouseVector.x, mouseVector.y, 0.5)
+        .unproject(camera)
+        .sub(camera.position)
+        .normalize();
+    var intersects = raycaster.intersectObject(globe.points);
+    if (intersects.length > 0) {
+      var faceIndex = intersects[0].faceIndex;
+      
+      var rawLat = parseFloat(window.data[faceIndex * 4]);
+      var rawLng = parseFloat(window.data[faceIndex * 4 + 1]);
+      var rawAlt = parseFloat(window.data[faceIndex * 4 + 2]);
 
-  raycaster.ray.origin.copy(camera.position);
-  raycaster.ray.direction.set(mouseVector.x, mouseVector.y, 0.5)
-      .unproject(camera)
-      .sub(camera.position)
-      .normalize();
+      var lat = (isNaN(rawLat) ? "-" : rawLat.toFixed(3) + '°');
+      var lng = (isNaN(rawLng) ? "-" : rawLng.toFixed(3) + '°');
+      var alt = (isNaN(rawAlt) ? "-" : rawAlt.toFixed(3) + ' KM');
+      var name = window.data[faceIndex * 4 + 3] || "-";
 
-  var intersects = raycaster.intersectObject(globe.points);
+      document.getElementById('latValue').textContent = lat;
+      document.getElementById('lngValue').textContent = lng;
+      document.getElementById('altValue').textContent = alt;
+      document.getElementById('nameValue').textContent = name;
 
-  if (intersects.length > 0) {
-    var faceIndex = intersects[0].faceIndex;
-    
-    var rawLat = parseFloat(window.data[faceIndex * 4]);
-    var rawLng = parseFloat(window.data[faceIndex * 4 + 1]);
-    var rawAlt = parseFloat(window.data[faceIndex * 4 + 2]);
-
-    var lat = (isNaN(rawLat) ? "-" : rawLat.toFixed(3) + '°');
-    var lng = (isNaN(rawLng) ? "-" : rawLng.toFixed(3) + '°');
-    var alt = (isNaN(rawAlt) ? "-" : rawAlt.toFixed(3) + ' KM');
-    var name = window.data[faceIndex * 4 + 3] || "-";
-
-    document.getElementById('latValue').textContent = lat;
-    document.getElementById('lngValue').textContent = lng;
-    document.getElementById('altValue').textContent = alt;
-    document.getElementById('nameValue').textContent = name;
-
-    
-}
+      
+  }
 
 }
 
