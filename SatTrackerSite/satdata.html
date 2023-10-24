@@ -1,79 +1,220 @@
 <!DOCTYPE html>
 <html lang="en">
-    <!--Setting up header with basic document information. Reference my css doc and fonts I'll be using-->
+<!-- Setting up header with basic document information. Reference my CSS doc and fonts I'll be using -->
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tracker</title>
     <link rel="stylesheet" href="styles.css" />
-    <link rel="stylesheet" href=""https://use.fontawesome.com/releases/v5.14.0/css/all.css" integrity="sha384-HzLeBuhoNPvSl5KYnjx0BT+WB0QEEqLprO+Nbkkk5gbc67FTaL7XIGa2w1L0Xbgc" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.14.0/css/all.css"
+        crossorigin="anonymous">
 </head>
-
+<style>
+    /* Add this CSS to your styles.css file or within a <style> tag in your HTML */
+    table th, table td {
+        padding: 0 15px; /* Adjust the horizontal padding as needed */
+    }
+    th, td {
+    border-bottom: 1px solid #ddd;
+    }
+    /*tr:hover {background-color: lightblue
+    ;}*/
+    tr:nth-child(even) {background-color: #f2f2f2;}
+    th, td {
+        text-align: left;
+        padding: 8px;
+    }
+    th {
+        background-color: blue;
+    color: white;
+    padding: 16px 20px;
+    margin: 8px 0;
+    border: none;
+    cursor: pointer;
+    width: 10%;
+    opacity: 0.9;
+    }
+</style>
 <body>
-    <!--Navbar-->
+    <!-- Navbar -->
     <nav class="navbar">
         <div class="navbar_cont">
             <a href="indexin.html" id="navbar_logo">
-                <!--<i class="fas fa-gem"></i> SatTracker</a>-->
+                <!-- <i class="fas fa-gem"></i> SatTracker</a> -->
                 <div class="logo_img">
-                    <img src="images/SatTrackerlogo.jpg"
-                    alt="pic" class="image" id="logo_img" width= 40%/>
+                    <img src="images/SatTrackerlogo.png"
+                        alt="pic" class="image" id="logo_img" width="40%" />
                 </div>
-            
-            <ul class="navbar_menu">
-                <li class="navbar_item">
-                    <a href="indexin.html" class="navbar_links"> Home </a>
-                </li>
-                <li class="navbar_item">
-                    <a href="tracker.html" class="navbar_links"> Tracker </a>
-                </li>
-                
-                
-                <li class="navbar_item">
-                    <a href="about-in.html" class="navbar_links"> About </a>
-                </li>
-                
-        
-                <li class="navbar_btn2">
-                    <a href="index.html" class="button">
-                        Log Out
-                    </a>
-                </li>
-            </ul>
-        </div>
+
+                <ul class="navbar_menu">
+                    <li class="navbar_item">
+                        <a href="indexin.html" class="navbar_links"> Home </a>
+                    </li>
+                    <li class="navbar_item">
+                        <a href="tracker.html" class="navbar_links"> Tracker </a>
+                    </li>
+
+                    <li class="navbar_item">
+                        <a href="about-in.html" class="navbar_links"> About </a>
+                    </li>
+
+                    <li class="navbar_btn2">
+                        <a href="index.html" class="button">
+                            Log Out
+                        </a>
+                    </li>
+                </ul>
+            </div>
     </nav>
 
-
     <div class="satdata">
-        <form action="https://jj24lfb5zg.execute-api.us-east-2.amazonaws.com/default/satData" method="get">
+        <form action="https://9xjza9f212.execute-api.us-east-2.amazonaws.com/default/satData" method="get">
             <div class="tabletitle">
-             <h1>Satellite Data</h1>
+                <h1>Satellite Data</h1>
             </div>
             <div class="Data_drop">
-             <label>Select Data</label>
+                <label>Select Data</label>
                 <select name="datatable" id="DT">
+                    <option value="tle">All Satellites</option>
                     <option value="LEO">LEO</option>
                     <option value="MEO">MEO</option>
-                    <option value="Starlink">Starlink</option>
+                    <option value="starlink">Starlink</option>
+                    <option value="oneweb">Oneweb</option>
+                    <option value="thorad">Thorad</option>
                 </select>
             </div>
             <div class="form-group">
                 <input type="submit" name="submit" class="regbtn" value="Generate">
             </div>
-            <table>
+            <table id="data-table">
                 <tr>
-                    <th>Sat Name</th>
+                    <th>Satellite Name</th>
                     <th>SatCat ID</th>
                     <th>Latitude</th>
                     <th>Longitude</th>
                     <th>Altitude</th>
+                    <th>Favorite</th>
                     <th></th>
                 </tr>
             </table>
         </form>
-        
-    
-        </div>
-    </body>
-    </html>
+    </div>
+</body>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Reference the HTML elements
+        const dataTable = document.getElementById("data-table");
+
+        // Handle the form submission
+        const form = document.querySelector("form");
+        form.addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            // Get the selected data table
+            const selectedTable = document.getElementById("DT").value;
+
+            // Fetch data from Lambda function
+            fetch(`https://9xjza9f212.execute-api.us-east-2.amazonaws.com/default/satData?datatable=${selectedTable}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Clear the existing table data
+                    dataTable.innerHTML = "";
+
+                    // Add table headers
+                    const headers = ["Satellite Name", "SatCat ID", "Latitude", "Longitude", "Altitude", "Favorite"];
+                    const headerRow = document.createElement("tr");
+                    headers.forEach(header => {
+                        const th = document.createElement("th");
+                        th.textContent = header;
+                        headerRow.appendChild(th);
+                    });
+                    dataTable.appendChild(headerRow);
+
+                    data.forEach(item => {
+                        const row = document.createElement("tr");
+                        Object.keys(item).forEach((key, index) => {
+                            const td = document.createElement("td");
+                            // Round all the numbers to the respective value, or just paste the string if not a number
+
+                            if (key == 4) {
+                                const altitudeValue = Number(item[key]).toFixed(2);
+                                td.textContent = altitudeValue;
+                            } else if (key == 2 || key == 3) {
+                                const coordinateValue = Number(item[key]).toFixed(5);
+                                td.textContent = coordinateValue;
+                            } else {
+                                td.textContent = item[key];
+                            }
+                            row.appendChild(td);
+                        });
+
+                        // Add the "Favorite" column with an unmarked checkbox
+                        const favoriteTd = document.createElement("td");
+                        const favoriteCheckbox = document.createElement("input");
+                        favoriteCheckbox.type = "checkbox";
+                        favoriteCheckbox.className = "favorite-checkbox"; // Add a class for easier selection
+                        favoriteTd.appendChild(favoriteCheckbox);
+                        row.appendChild(favoriteTd);
+
+                        dataTable.appendChild(row);
+                    });
+                    // Initialize local storage of favSat as an empty array
+                    localStorage.setItem("favSat", "[]");
+
+                    // Add event listener to checkboxes
+                    const favoriteCheckboxes = document.querySelectorAll(".favorite-checkbox");
+                    favoriteCheckboxes.forEach(checkbox => {
+                        checkbox.addEventListener("change", function () {
+                            if (this.checked) {
+                                const row = this.closest("tr");
+                                const rowData = {
+                                    "Satellite Name": row.cells[0].textContent,
+                                    "SatCat ID": row.cells[1].textContent,
+                                    "Latitude": row.cells[2].textContent,
+                                    "Longitude": row.cells[3].textContent,
+                                    "Altitude": row.cells[4].textContent
+                                };
+                                
+                                // Retrieve the array from local storage
+                                let retString = localStorage.getItem("favSat");
+                                let retArray = JSON.parse(retString);
+
+                                // Add the new item to the array
+                                retArray.push(row.cells[1].textContent);
+                                console.log("Added: ", JSON.stringify(retArray))
+                                // Save the updated array back to local storage
+                                localStorage.setItem("favSat", JSON.stringify(retArray));
+                            }
+                            else{
+                                const row = this.closest("tr");
+                                const rowData = {
+                                    "Satellite Name": row.cells[0].textContent,
+                                    "SatCat ID": row.cells[1].textContent,
+                                    "Latitude": row.cells[2].textContent,
+                                    "Longitude": row.cells[3].textContent,
+                                    "Altitude": row.cells[4].textContent
+                                };
+                                // Retrieve the array from local storage
+                                let retString = localStorage.getItem("favSat");
+                                let retArray = JSON.parse(retString);
+                                // Check if row.cells[1].textContent exists in retArray and remove it
+                                const indexToRemove = retArray.indexOf(row.cells[1].textContent);
+                                if (indexToRemove !== -1) {
+                                    retArray.splice(indexToRemove, 1);
+                                }
+                                console.log("Removed: ", JSON.stringify(retArray))
+                                // Save the updated array back to local storage
+                                localStorage.setItem("favSat", JSON.stringify(retArray));              
+                            }
+                            //console.log(favSatellites);
+                        });
+                    });
+                })
+                .catch(error => {
+                    console.error("Error fetching data:", error);
+                });
+        });
+    });
+</script>
+</html>

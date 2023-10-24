@@ -76,14 +76,15 @@ def importToSQL(line_iterator, tableName):
 
             # Values to insert into the table as a tuple
             values = (satName, satCat, intlDesignator, elSetEpoch, firstTimeDeriv, secondTimeDeriv, bDragTerm, elSetType, elementNum, orbitInclination, rightAscending, eccentricity, perigee, anomaly, meanMotion, satOrder, latitude, longitude, altitude, line1, line2, line3)
+            if not(satName.contains("DEB") or satName.contains("OBJECT")):
+                try:
+                    # Execute the query
+                    #print("executing: ", satName)
+                    cursor.execute(query, values)
+                except Exception as e:
+                    print("Error executing query:", e)
+                satOrder += 1
             
-            try:
-                # Execute the query
-                #print("executing: ", satName)
-                cursor.execute(query, values)
-            except Exception as e:
-                print("Error executing query:", e)
-            satOrder += 1
         print("Committing Inserts...")
         connection.commit()
         cursor.close()

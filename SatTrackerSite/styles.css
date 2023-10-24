@@ -487,8 +487,12 @@ hr{
   padding-bottom: 20px;
 }
 
-
-
+table th:nth-child(3),
+table td:nth-child(3),
+table th:nth-child(4),
+table td:nth-child(4) {
+    padding-right: 20px; /* Adjust the value as needed */
+}
 
 
 
