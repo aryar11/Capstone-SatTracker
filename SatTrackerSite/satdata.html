@@ -35,6 +35,10 @@
     width: 10%;
     opacity: 0.9;
     }
+    #save-favorites-button {
+        float: right;
+        margin-right: 120px; 
+    }
 </style>
 <body>
     <!-- Navbar -->
@@ -86,6 +90,7 @@
             </div>
             <div class="form-group">
                 <input type="submit" name="submit" class="regbtn" value="Generate">
+                <button id="save-favorites-button" class="regbtn">Save Favorites</button>
             </div>
             <table id="data-table">
                 <tr>
@@ -186,9 +191,6 @@
                                 const rowData = {
                                     "Satellite Name": row.cells[0].textContent,
                                     "SatCat ID": row.cells[1].textContent,
-                                    "Latitude": row.cells[2].textContent,
-                                    "Longitude": row.cells[3].textContent,
-                                    "Altitude": row.cells[4].textContent
                                 };
                                 //ADDING TO FAVSAT LIST
                                 // Retrieve the array from local storage
@@ -230,6 +232,21 @@
                     console.error("Error fetching data:", error);
                 });
         });
+    });
+
+    // Add an event listener to the "Save Favorites" button
+    const saveFavoritesButton = document.getElementById("save-favorites-button");
+    saveFavoritesButton.addEventListener("click", function () {
+        // Handle saving favorite satellites here
+        // You can access the list of favorite satellites from local storage:
+        const favoriteSatellites = JSON.parse(localStorage.getItem("favSat"));
+        
+        // You can now use the favoriteSatellites array as needed.
+        // For example, you can send it to the server or perform any other action.
+
+        // For now, let's log it to the console.
+        console.log("Favorite Satellites: ", JSON.stringify(favoriteSatellites));
+        // You can further process this list as per your requirements.
     });
 </script>
 </html>
