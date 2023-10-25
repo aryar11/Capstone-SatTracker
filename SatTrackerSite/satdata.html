@@ -113,11 +113,17 @@
 
             // Get the selected data table
             const selectedTable = document.getElementById("DT").value;
-
+            // Get the username from local storage
+            const username = localStorage.getItem("username");
+            // Initialize local storage of favSat as an empty array
+            localStorage.setItem("favSat", "[]");
             // Fetch data from Lambda function
-            fetch(`https://9xjza9f212.execute-api.us-east-2.amazonaws.com/default/satData?datatable=${selectedTable}`)
+            fetch(`https://9xjza9f212.execute-api.us-east-2.amazonaws.com/default/satData?datatable=${selectedTable}&username=${username}`)
                 .then(response => response.json())
                 .then(data => {
+                    const userdata = data.userdata[0][0];
+                    const userdataArray = userdata.split(',');
+                    data = data.data;
                     // Clear the existing table data
                     dataTable.innerHTML = "";
 
@@ -136,7 +142,6 @@
                         Object.keys(item).forEach((key, index) => {
                             const td = document.createElement("td");
                             // Round all the numbers to the respective value, or just paste the string if not a number
-
                             if (key == 4) {
                                 const altitudeValue = Number(item[key]).toFixed(2);
                                 td.textContent = altitudeValue;
@@ -158,14 +163,24 @@
                         row.appendChild(favoriteTd);
 
                         dataTable.appendChild(row);
+                        // Check if the current satellite's ID exists in userdataArray
+                        if (userdataArray.includes(item[1])) {
+                            favoriteCheckbox.checked = true; // Check the checkbox
+                            let retString = localStorage.getItem("favSat");
+                            let retArray = JSON.parse(retString);
+                            // Add the new item to the array
+                            retArray.push(item[1]);
+                            console.log("Added: ", JSON.stringify(retArray))
+                            // Save the updated array back to local storage
+                            localStorage.setItem("favSat", JSON.stringify(retArray));
+                        }
                     });
-                    // Initialize local storage of favSat as an empty array
-                    localStorage.setItem("favSat", "[]");
 
                     // Add event listener to checkboxes
                     const favoriteCheckboxes = document.querySelectorAll(".favorite-checkbox");
                     favoriteCheckboxes.forEach(checkbox => {
                         checkbox.addEventListener("change", function () {
+                            //CHECKING BOX
                             if (this.checked) {
                                 const row = this.closest("tr");
                                 const rowData = {
@@ -175,7 +190,7 @@
                                     "Longitude": row.cells[3].textContent,
                                     "Altitude": row.cells[4].textContent
                                 };
-                                
+                                //ADDING TO FAVSAT LIST
                                 // Retrieve the array from local storage
                                 let retString = localStorage.getItem("favSat");
                                 let retArray = JSON.parse(retString);
@@ -207,7 +222,7 @@
                                 // Save the updated array back to local storage
                                 localStorage.setItem("favSat", JSON.stringify(retArray));              
                             }
-                            //console.log(favSatellites);
+                            
                         });
                     });
                 })

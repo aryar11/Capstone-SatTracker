@@ -49,7 +49,7 @@
             <form action=" https://my6i0u7xdf.execute-api.us-east-2.amazonaws.com/default/LogIN" method="get">
                 <div class="form-group">
                     <label>Username</label>
-                    <input type="text" name="username" class="form-control" pattern= "[a-zA-Z0-9]+" required>
+                    <input type="text" id="username" name="username" class="form-control" pattern= "[a-zA-Z0-9]+" required>
                 </div>
                 <div class="form-group">
                     <label>Password</label>
@@ -67,3 +67,14 @@
             </form>
         </div>
     </div>
+    <script>
+        const usernameInput = document.querySelector('input[name="username"]');
+        // Add an event listener for the input event
+        usernameInput.addEventListener('input', function (event) {
+            // Get the updated username input value
+            const updatedUsername = event.target.value;
+            // Save the updated username in local storage
+            localStorage.setItem('username', updatedUsername);
+        });
+    </script>
+</body>

@@ -55,5 +55,49 @@ def fetch_tles():
         s3.upload_file('satellites.json', bucket_name, 'satellites.json')
     finally:
         connection.close()
+def fetch_user_tles(username):
+    satellite_data = []  # Create an empty list to store all satellite data
+    connection = connect_to_rds()
+    try:
+        with connection.cursor() as cursor:
+            
+            ts = load.timescale()
+            #Get Satellites 
+            sql_query = f"SELECT lat, lng, alt, satName, line1, line2, line3 FROM SatTracker.tle"
+            cursor.execute(sql_query)
+            results = cursor.fetchall()
+            satellites_for_category = []
+            #Get User favorites
+            user_sql_query = f"SELECT favorites FROM SatTracker.users2"
+            cursor.execute(user_sql_query)
+            results = cursor.fetchall()
+                     
+            for result in results:
+                lat = float(result['lat'])
+                lon = float(result['lng'])
+                alt = float(result['alt'])
+                name = result['satName']
+                satellite = EarthSatellite(result['line2'], result['line3'], result['line1'], ts=None)
+                geocentric = satellite.at(ts.now())
+                subpoint = geocentric.subpoint()
+                #satellites_for_category.extend([lat, lon, alt, name])
+                satellites_for_category.extend([ float(subpoint.latitude.degrees), float(subpoint.longitude.degrees), float(subpoint.elevation.km), name])
+            satellite_data.append(["Favorites", satellites_for_category])
 
+        # Output to a JSON file
+        with open("satellites.json", "w") as json_file:
+            json.dump(satellite_data, json_file, indent=4)
+        #####Importing to bucket######
+        s3 = boto3.client(
+            's3',
+            aws_access_key_id='AKIA2GBQBRJE53N4XPM3',
+            aws_secret_access_key='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'
+        )
+        bucket_name = "satdate"
+        html_file_path = "https://satdate.s3.us-east-2.amazonaws.com/satellites.json"
+
+        #upload the HTML to S3 aws
+        s3.upload_file('satellites.json', bucket_name, 'satellites.json')
+    finally:
+        connection.close()
 fetch_tles()
