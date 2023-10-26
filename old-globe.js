@@ -1,0 +1,605 @@
+/**
+ * dat.globe Javascript WebGL Globe Toolkit
+ * http://dataarts.github.com/dat.globe
+ *
+ * Copyright 2011 Data Arts Team, Google Creative Lab
+ *
+ * Licensed under the Apache License, Version 2.0 (the 'License');
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ */
+
+var DAT = DAT || {};
+var satelliteCubes = [];
+let userLat;
+let userLon;
+
+
+
+var GLOBE_RADIUS = 75;
+
+DAT.Globe = function(container, colorFn) {
+
+  colorFn = colorFn || function(x) {
+    var normalC = x / 30000
+    var c = new THREE.Color();
+    c.setHSL( ( 0.6 - ( normalC * 0.5 ) ), 1.0, 0.5 );
+    console.log(c.getHex());
+    return c;
+  };
+
+  var Shaders = {
+    'earth' : {
+      uniforms: {
+        'texture': { type: 't', value: null }
+      },
+      vertexShader: [
+        'varying vec3 vNormal;',
+        'varying vec2 vUv;',
+        'void main() {',
+          'gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );',
+          'vNormal = normalize( normalMatrix * normal );',
+          'vUv = uv;',
+        '}'
+      ].join('\n'),
+      fragmentShader: [
+        'uniform sampler2D texture;',
+        'varying vec3 vNormal;',
+        'varying vec2 vUv;',
+        'void main() {',
+          'vec3 diffuse = texture2D( texture, vUv ).xyz;',
+          'float intensity = 1.05 - dot( vNormal, vec3( 0.0, 0.0, 1.0 ) );',
+          'vec3 atmosphere = vec3( 1.0, 1.0, 1.0 ) * pow( intensity, 3.0 );',
+          'gl_FragColor = vec4( diffuse + atmosphere, 1.0 );',
+        '}'
+      ].join('\n')
+    },
+    'atmosphere' : {
+      uniforms: {},
+      vertexShader: [
+        'varying vec3 vNormal;',
+        'void main() {',
+          'vNormal = normalize( normalMatrix * normal );',
+          'gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );',
+        '}'
+      ].join('\n'),
+      fragmentShader: [
+        'varying vec3 vNormal;',
+        'void main() {',
+          'float intensity = pow( 0.8 - dot( vNormal, vec3( 0, 0, 1.0 ) ), 12.0 );',
+          'gl_FragColor = vec4( 1.0, 1.0, 1.0, 1.0 ) * intensity;',
+        '}'
+      ].join('\n')
+    }
+  };
+
+  var camera, scene, renderer, w, h;
+  var mesh, atmosphere, point;
+
+  var overRenderer;
+
+  var imgDir = '';
+
+  var curZoomSpeed = 0;
+  var zoomSpeed = 50;
+
+  var mouse = { x: 0, y: 0 }, mouseOnDown = { x: 0, y: 0 };
+  var rotation = { x: 0, y: 0 },
+      target = { x: Math.PI*3/2, y: Math.PI / 6.0 },
+      targetOnDown = { x: 0, y: 0 };
+
+  var distance = 100000, distanceTarget = 100000;
+  var padding = 40;
+  var PI_HALF = Math.PI / 2;
+
+  function init() {
+
+    container.style.color = '#fff';
+    container.style.font = '13px/20px Arial, sans-serif';
+
+    var shader, uniforms, material;
+    w = container.offsetWidth || window.innerWidth;
+    h = container.offsetHeight || window.innerHeight;
+
+    camera = new THREE.PerspectiveCamera(30, w / h, 1, 10000);
+    camera.position.z = distance;
+
+    scene = new THREE.Scene();
+
+    var geometry = new THREE.SphereGeometry(GLOBE_RADIUS, 40, 30);
+
+    shader = Shaders['earth'];
+    uniforms = THREE.UniformsUtils.clone(shader.uniforms);
+
+    uniforms['texture'].value = THREE.ImageUtils.loadTexture(imgDir+'earth.jpg');
+
+    material = new THREE.ShaderMaterial({
+
+          uniforms: uniforms,
+          vertexShader: shader.vertexShader,
+          fragmentShader: shader.fragmentShader
+
+        });
+
+    mesh = new THREE.Mesh(geometry, material);
+    mesh.rotation.y = Math.PI;
+    scene.add(mesh);
+
+    shader = Shaders['atmosphere'];
+    uniforms = THREE.UniformsUtils.clone(shader.uniforms);
+
+    material = new THREE.ShaderMaterial({
+
+          uniforms: uniforms,
+          vertexShader: shader.vertexShader,
+          fragmentShader: shader.fragmentShader,
+          side: THREE.BackSide,
+          blending: THREE.AdditiveBlending,
+          transparent: true
+
+        });
+
+    mesh = new THREE.Mesh(geometry, material);
+    mesh.scale.set( 1.1, 1.1, 1.1 );
+    scene.add(mesh);
+
+    geometry = new THREE.CubeGeometry(0.75, 0.75, 1);
+    geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0,0,-0.5));
+
+    point = new THREE.Mesh(geometry);
+//    point = new THREE.ParticleSystem(geometry);
+
+    renderer = new THREE.WebGLRenderer({antialias: true});
+    
+    renderer.setSize(w, h);
+
+    renderer.domElement.style.position = 'absolute';
+
+    container.appendChild(renderer.domElement);
+
+    container.addEventListener('mousedown', onMouseDown, false);
+
+    container.addEventListener('mousewheel', onMouseWheel, false);
+
+    document.addEventListener('keydown', onDocumentKeyDown, false);
+
+    window.addEventListener('resize', onWindowResize, false);
+
+    container.addEventListener('mouseover', function() {
+      overRenderer = true;
+    }, false);
+
+    container.addEventListener('mouseout', function() {
+      overRenderer = false;
+    }, false);
+  }
+
+  addData = function(data, opts) {
+    var lat, lng, size, color, i, step, colorFnWrapper;
+
+    opts.format = opts.format || 'magnitude'; // other option is 'legend'
+    console.log(opts.format);
+    if (opts.format === 'magnitude') {
+      step = 4;
+      colorFnWrapper = function(data, i) { return colorFn(data[i+2]); }
+    } else if (opts.format === 'legend') {
+      step = 5;
+      colorFnWrapper = function(data, i) { return colorFn(data[i+3]); }
+    } else {
+      throw('error: format not supported: '+opts.format);
+    }
+
+    var subgeo = new THREE.Geometry();
+
+    var min_size = 10000000000;
+    var max_size = 0;
+
+    for (i = 0; i < data.length; i += step) {
+      lat = data[i];
+      lng = data[i + 1];
+      color = colorFnWrapper(data,i+2);
+      size = data[i + 2];
+      size = size / 30;// size = size *GLOBE_RADIUS;
+      addPoint(lat, lng, size, color, subgeo);
+
+      min_size = Math.min(min_size, size);
+      max_size = Math.max(max_size, size);
+    }
+
+    console.log(min_size);
+    console.log(max_size);
+
+    this._baseGeometry = subgeo;
+  };
+
+  function createPoints() {
+    if (this._baseGeometry !== undefined) {
+      this.points = new THREE.Mesh(this._baseGeometry, new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        vertexColors: THREE.FaceColors,
+        morphTargets: false,
+        side: THREE.DoubleSide  // Make the material double-sided
+      }));
+
+      scene.add(this.points);
+    }
+}
+
+
+
+function addPoint(lat, lng, size, color, subgeo) {
+  console.log("Adding point:", lat, lng, size, color);
+  var phi = (90 - lat) * Math.PI / 180;
+  var theta = (180 - lng) * Math.PI / 180;
+  var r = ((1 + (size / 100.0)) * GLOBE_RADIUS);
+
+  // Create a cube for this point
+  var geometry = new THREE.BoxGeometry(1, 1, 1);
+  var material = new THREE.MeshBasicMaterial({ color: color }); // Use the given color
+  var cube = new THREE.Mesh(geometry, material);
+
+  cube.position.x = r * Math.sin(phi) * Math.cos(theta);
+  cube.position.y = r * Math.cos(phi);
+  cube.position.z = r * Math.sin(phi) * Math.sin(theta);
+  cube.scale.set(4, 4, 4);  // Scale the cube
+  cube.lookAt(mesh.position); // Make the cube look at the mesh (globe center)
+  cube.updateMatrix();
+
+  scene.add(cube);  // Add the cube to the scene
+  satelliteCubes.push(cube); // Add the cube to the satelliteCubes array
+
+  
+  // THREE.GeometryUtils.merge(subgeo, point);
+}
+
+
+// Add an event listener for mouse clicks on the container
+container.addEventListener('click', onSatClick, false);
+
+let lastClickedSatellite = null; 
+
+//can click the sat, it creates a pop up, but with no information, in the if statement
+function onSatClick(event) {
+  event.preventDefault();
+
+  var raycaster = new THREE.Raycaster();
+  var mouseVector = new THREE.Vector2(
+      (event.clientX / window.innerWidth) * 2 - 1,
+      -(event.clientY / window.innerHeight) * 2 + 1
+  );
+
+  raycaster.ray.origin.copy(camera.position);
+  raycaster.ray.direction.set(mouseVector.x, mouseVector.y, 0.5)
+      .unproject(camera)
+      .sub(camera.position)
+      .normalize();
+
+  var intersects = raycaster.intersectObjects(satelliteCubes);  // Check for intersection with all cubes in satelliteCubes array
+  console.log("Intersections found:", intersects.length);
+
+  if (intersects.length > 0) {
+    var clickedCube = intersects[0].object;
+
+    // If there was a previously clicked satellite, revert its color
+    if (lastClickedSatellite) {
+      lastClickedSatellite.material.color.set(0xffffff); //the original color is white
+    }
+
+    // Change color of the clicked cube to red
+    clickedCube.material.color.set(0xff0000);   //can change this for red, blue, yellow, etc
+
+    // Update the lastClickedSatellite reference
+    lastClickedSatellite = clickedCube;
+
+    var satelliteIndex = satelliteCubes.indexOf(clickedCube);  // Get the index of the clicked cube within the satelliteCubes array
+
+    if (satelliteIndex * 4 + 3 < window.data.length) {
+      var rawLat = parseFloat(window.data[satelliteIndex * 4]);
+      var rawLng = parseFloat(window.data[satelliteIndex * 4 + 1]);
+      var rawAlt = parseFloat(window.data[satelliteIndex * 4 + 2]);
+      var name = window.data[satelliteIndex * 4 + 3] || "-";
+      
+      document.getElementById('latValue').textContent = rawLat.toFixed(3) + '°';
+      document.getElementById('lngValue').textContent = rawLng.toFixed(3) + '°';
+      document.getElementById('altValue').textContent = rawAlt.toFixed(3) + ' KM';
+      document.getElementById('nameValue').textContent = name;
+    } else {
+      console.error("Invalid satellite index:", satelliteIndex);
+      console.log(clickedCube); // Logs the entire clicked cube object
+    }
+  }
+}
+
+
+
+
+
+function geocodeAddress() {
+  var address = document.getElementById('address').value;
+  console.log('Geocoding address:', address);  // Logging the address being geocoded
+
+  var url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`;
+
+  fetch(url)
+      .then(response => response.json())
+      .then(data => {
+          if (data && data.length) {
+              var latitude = parseFloat(data[0].lat);
+              var longitude = parseFloat(data[0].lon);
+
+              userLat = latitude;
+              userLon = longitude;
+
+              console.log('Latitude:', latitude, 'Longitude:', longitude);  // Logging the resulting latitude and longitude
+
+              // Updating the User Location table with the fetched latitude and longitude
+              document.getElementById('userLatValue').textContent = latitude;
+              document.getElementById('userLonValue').textContent = longitude;
+
+          } else {
+              console.log('Address not found.');  // Logging if address isn't found
+              alert('Address not found.');
+          }
+      })
+      .catch(error => {
+          console.error('Error geocoding address:', error);  // Logging any errors during geocoding
+          alert('Error geocoding address.');
+      });
+}
+
+
+
+function getCurrentLocation() {
+  console.log('Getting current location...');  // Logging the start of getting the location
+
+  if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(function(position) {
+          var latitude = position.coords.latitude;
+          var longitude = position.coords.longitude;
+
+          userLat = latitude;
+          userLon = longitude;
+
+          console.log('Latitude:', latitude, 'Longitude:', longitude);  // Logging the current latitude and longitude
+
+          // Updating the User Location table with the current latitude and longitude
+          document.getElementById('userLatValue').textContent = latitude;
+          document.getElementById('userLonValue').textContent = longitude;
+
+      }, function() {
+          console.error('Error getting location.');  // Logging any errors while getting location
+          alert('Error getting location.');
+      });
+  } else {
+      console.error('Your browser does not support geolocation.');  // Logging if geolocation is not supported
+      alert('Your browser does not support geolocation.');
+  }
+}
+function haversineDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Radius of the Earth in kilometers
+  let dLat = toRad(lat2 - lat1);
+  let dLon = toRad(lon2 - lon1);
+  let a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+          Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c; // Distance in kilometers
+}
+
+function toRad(value) {
+  return value * Math.PI / 180;
+}
+
+function findClosestSatellite(userLat, userLon, satellitesData) {
+  let closestSatellite = null;
+  let minDistance = Number.MAX_VALUE;
+
+  for (let i = 0; i < satellitesData.length; i += 4) {
+      let satelliteLat = parseFloat(satellitesData[i]);
+      let satelliteLon = parseFloat(satellitesData[i + 1]);
+      
+      let distance = haversineDistance(userLat, userLon, satelliteLat, satelliteLon);
+
+      if (distance < minDistance) {
+          minDistance = distance;
+          closestSatellite = {
+              name: satellitesData[i + 3] || "Unnamed satellite", 
+              latitude: satelliteLat,
+              longitude: satelliteLon,
+              altitude: parseFloat(satellitesData[i + 2]),
+              distance: minDistance
+          };
+      }
+  }
+  return closestSatellite;
+}
+
+
+function computeClosestSatellite() {
+  console.log("computeClosestSatellite called");
+  console.log("User Latitude:", userLat);
+  console.log("User Longitude:", userLon);
+  console.log("Satellites Data:", window.data);
+
+  if (userLat && userLon && window.data) {
+      let closest = findClosestSatellite(userLat, userLon, window.data);
+      if (closest) {
+          console.log("The closest satellite is:", closest.name);
+          // Update the satellite data table with the closest satellite's data
+          document.getElementById('satLatValue').textContent = closest.latitude.toFixed(3) + '°';
+          document.getElementById('satLonValue').textContent = closest.longitude.toFixed(3) + '°';
+          document.getElementById('satAltValue').textContent = closest.altitude.toFixed(3) + ' KM';
+          document.getElementById('satNameValue').textContent = closest.name;
+      } else {
+          console.log("Couldn't find a close satellite.");
+      }
+  }
+}
+
+
+
+
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Bind geocodeAddress to the relevant button
+  document.getElementById('addressButton').addEventListener('click', geocodeAddress);
+  
+  // Bind getCurrentLocation to the relevant button
+  document.getElementById('locationButton').addEventListener('click', getCurrentLocation);
+
+  // Bind computeClosestSatellite to the "Find Closest Satellite" button
+  document.getElementById("closestSatelliteButton").addEventListener("click", computeClosestSatellite);
+  
+  // Bind onSatelliteClick to the container (assuming it's the WebGL rendering area)
+  var globeContainer = document.getElementById('container');
+  globeContainer.addEventListener('click', onSatelliteClick);
+});
+
+
+
+
+
+
+
+
+
+
+function onMouseDown(event) {
+    event.preventDefault();
+
+    container.addEventListener('mousemove', onMouseMove, false);
+    container.addEventListener('mouseup', onMouseUp, false);
+    container.addEventListener('mouseout', onMouseOut, false);
+
+    mouseOnDown.x = - event.clientX;
+    mouseOnDown.y = event.clientY;
+
+    targetOnDown.x = target.x;
+    targetOnDown.y = target.y;
+
+    container.style.cursor = 'move';
+  }
+
+  function onMouseMove(event) {
+    mouse.x = - event.clientX;
+    mouse.y = event.clientY;
+
+    var zoomDamp = distance/1000;
+
+    target.x = targetOnDown.x + (mouse.x - mouseOnDown.x) * 0.005 * zoomDamp;
+    target.y = targetOnDown.y + (mouse.y - mouseOnDown.y) * 0.005 * zoomDamp;
+
+    target.y = target.y > PI_HALF ? PI_HALF : target.y;
+    target.y = target.y < - PI_HALF ? - PI_HALF : target.y;
+  }
+
+  function onMouseUp(event) {
+    container.removeEventListener('mousemove', onMouseMove, false);
+    container.removeEventListener('mouseup', onMouseUp, false);
+    container.removeEventListener('mouseout', onMouseOut, false);
+    container.style.cursor = 'auto';
+  }
+
+  function onMouseOut(event) {
+    container.removeEventListener('mousemove', onMouseMove, false);
+    container.removeEventListener('mouseup', onMouseUp, false);
+    container.removeEventListener('mouseout', onMouseOut, false);
+  }
+
+  function onMouseWheel(event) {
+    event.preventDefault();
+    if (overRenderer) {
+      zoom(event.wheelDeltaY * 0.3);
+    }
+    return false;
+  }
+
+  function onDocumentKeyDown(event) {
+    switch (event.keyCode) {
+      case 38:
+        zoom(100);
+        event.preventDefault();
+        break;
+      case 40:
+        zoom(-100);
+        event.preventDefault();
+        break;
+    }
+  }
+
+  function onWindowResize( event ) {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize( window.innerWidth, window.innerHeight );
+  }
+
+  function zoom(delta) {
+    distanceTarget -= delta;
+    distanceTarget = distanceTarget > 1000 ? 1000 : distanceTarget;
+    distanceTarget = distanceTarget < 350 ? 350 : distanceTarget;
+  }
+
+  function animate() {
+    requestAnimationFrame(animate);
+    render();
+  }
+
+  function render() {
+    zoom(curZoomSpeed);
+
+    rotation.x += (target.x - rotation.x) * 0.1;
+    rotation.y += (target.y - rotation.y) * 0.1;
+    distance += (distanceTarget - distance) * 0.3;
+
+    camera.position.x = distance * Math.sin(rotation.x) * Math.cos(rotation.y);
+    camera.position.y = distance * Math.sin(rotation.y);
+    camera.position.z = distance * Math.cos(rotation.x) * Math.cos(rotation.y);
+
+    camera.lookAt(mesh.position);
+
+    renderer.render(scene, camera);
+  }
+
+  init();
+  this.animate = animate;
+
+
+  this.__defineGetter__('time', function() {
+    return this._time || 0;
+  });
+
+  this.__defineSetter__('time', function(t) {
+    var validMorphs = [];
+    var morphDict = this.points.morphTargetDictionary;
+    for(var k in morphDict) {
+      if(k.indexOf('morphPadding') < 0) {
+        validMorphs.push(morphDict[k]);
+      }
+    }
+    validMorphs.sort();
+    var l = validMorphs.length-1;
+    var scaledt = t*l+1;
+    var index = Math.floor(scaledt);
+    for (i=0;i<validMorphs.length;i++) {
+      this.points.morphTargetInfluences[validMorphs[i]] = 0;
+    }
+    var lastIndex = index - 1;
+    var leftover = scaledt - index;
+    if (lastIndex >= 0) {
+      this.points.morphTargetInfluences[lastIndex] = 1 - leftover;
+    }
+    this.points.morphTargetInfluences[index] = leftover;
+    this._time = t;
+  });
+
+  this.addData = addData;
+  this.createPoints = createPoints;
+  this.renderer = renderer;
+  renderer.domElement.addEventListener('click', onSatClick);
+  this.scene = scene;
+
+  return this;
+
+};
