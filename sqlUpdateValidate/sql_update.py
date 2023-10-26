@@ -84,7 +84,7 @@ def importToSQL(line_iterator, tableName):
                 except Exception as e:
                     print("Error executing query:", e)
                 satOrder += 1
-            
+
         print("Committing Inserts...")
         connection.commit()
         cursor.close()

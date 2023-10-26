@@ -240,6 +240,51 @@
         cursor: pointer;
         transition: all 0.1s ease-out;
     }
+    #locationInput {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: rgba(0,0,0,0.2);  /* Semi-transparent background */
+    padding: 5px;
+    border-radius: 5px;
+}
+
+#address {
+    padding: 5px;
+    margin-right: 10px;
+    vertical-align: middle;
+}
+
+button {
+    padding: 5px 10px;
+    cursor: pointer;
+    background-color: #34cb57;  /* Reusing your green color */
+    border: none;
+    color: white;
+    vertical-align: middle;
+}
+
+button:hover {
+    background-color: #2ba045;
+}
+
+/* New CSS for tables */
+table {
+    width: 100%; 
+    margin-top: 20px;
+    border-collapse: collapse;
+}
+
+table, th, td {
+    border: 1px solid #dddddd;
+    padding: 8px;
+    text-align: left;
+}
+
+th {
+  background-color: #f2f2f2;
+  color: #333333;  
+}
     
   </style>
 </head>
@@ -288,7 +333,88 @@
 <div id="title">
   SatTracker
 </div>
+<div id="locationInput">
+  <input type="text" id="address" placeholder="Enter address..." style="vertical-align: middle;">
+  <button id="addressButton">Find using address</button>
+  <button id="locationButton">Get my location</button>
+  
 
+  
+<!-- User location table -->
+<table>
+<thead>
+    <tr>
+        <th colspan="2">User Location</th>
+    </tr>
+</thead>
+<tbody>
+    <tr>
+        <td>Latitude:</td>
+        <td id="userLatValue">-</td>
+    </tr>
+    <tr>
+        <td>Longitude:</td>
+        <td id="userLonValue">-</td>
+    </tr>
+</tbody>
+</table>
+
+<!-- Button to find closest satellite -->
+<button id="closestSatelliteButton">Find Closest Satellite</button>
+
+<!-- Closest satellite data table -->
+<table>
+<thead>
+    <tr>
+        <th colspan="2">Closest Satellite Data</th>
+    </tr>
+</thead>
+<tbody>
+    <tr>
+        <td>Latitude:</td>
+        <td id="satLatValue">-</td>
+    </tr>
+    <tr>
+        <td>Longitude:</td>
+        <td id="satLonValue">-</td>
+    </tr>
+    <tr>
+        <td>Altitude:</td>
+        <td id="satAltValue">-</td>
+    </tr>
+    <tr>
+        <td>Name:</td>
+        <td id="satNameValue">-</td>
+    </tr>
+</tbody>
+</table>
+</div>
+<!--
+<div id="currentInfo">   
+  <div id="satelliteData">
+      <h3>Selected Satellite</h3>
+      <table>
+          <tbody>
+              <tr>
+                  <td>Latitude:</td>
+                  <td id="latValue">-</td>
+              </tr>
+              <tr>
+                  <td>Longitude:</td>
+                  <td id="lngValue">-</td>
+              </tr>
+              <tr>
+                  <td>Altitude:</td>
+                  <td id="altValue">-</td>
+              </tr>
+              <tr>
+                  <td>Name:</td>
+                  <td id="nameValue">-</td>
+              </tr>
+          </tbody>
+      </table>
+  </div>
+-->
 <div id="title_right">
    <a href="../indexin.html">Back to the Homepage</a>
 </div>
@@ -338,6 +464,9 @@ Use Up and down arrows zoom in and out. Use the mouse to rotate.<br /><br /></di
 <script type="text/javascript" src="globe.js"></script>
 <script type="text/javascript" src="third-party/Tween.js"></script>
 <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1135.0.min.js"></script>
+<script type="text/javascript" src="geocodeAddress().js"></script>
+<script type="text/javascript" src="getCurrentLocation().js"></script>
+<script type="text/javascript" src="Closest_sat.js"></script>
 <script type="text/javascript">
 
   var globe = DAT.Globe(document.getElementById('container'), function(label) {
