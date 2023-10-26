@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <title>WebGL Globe</title>
+  <meta charset="utf-8">
+  <style type="text/css">
+    html {
+      height: 100%;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: #000000 url(loading.gif) center center no-repeat;
+      color: #ffffff;
+      font-family: sans-serif;
+      font-size: 13px;
+      line-height: 20px;
+      height: 100%;
+    }
+
+    #info {
+
+      font-size: 11px;
+      position: absolute;
+      bottom: 5px;
+      background-color: rgba(0, 0, 0, 0.8);
+      border-radius: 3px;
+      right: 10px;
+      padding: 10px;
+
+    }
+
+    a {
+      color: #aaa;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .bull {
+      padding: 0px 5px;
+      color: #555;
+    }
+
+    #title {
+      position: absolute;
+      top: 20px;
+      width: 320px;
+      left: 20px;
+      background-color: rgba(0, 0, 0, 0.2);
+      font: 20px/20px Georgia;
+      padding: 15px;
+    }
+
+    #currentInfo {
+        width: 270px;
+        position: absolute;
+        left: 20px;
+        top: 63px;
+
+        background-color: rgba(0,0,0,0.2);
+
+        border-top: 1px solid rgba(255,255,255,0.4);
+        padding: 10px;
+    }
+
+    .year {
+
+      font: 16px Georgia;
+      line-height: 26px;
+      height: 30px;
+      text-align: center;
+      float: left;
+      width: 90px;
+      color: rgba(255, 255, 255, 0.4);
+
+      cursor: pointer;
+      -webkit-transition: all 0.1s ease-out;
+    }
+
+    .year:hover, .year.active {
+      font-size: 23px;
+      color: #fff;
+    }
+
+    #ce span {
+      display: none;
+    }
+
+    span.green {
+      color: #34cb57;
+    }
+
+    span.gray {
+      color: #666666;
+    }
+
+    span.red {
+      color: #db0b00;
+    }
+    #popup {
+      position: absolute;
+      background-color: #fff;
+      padding: 10px;
+      border: 1px solid #ccc;
+      box-shadow: 2px 2px 5px rgb(0, 0, 0);
+      z-index: 999;
+    }
+    .satellite:hover, .satellite.active {
+        font-size: 23px;
+        color: #fff;
+    }
+    .satellite {
+        font: 16px Georgia;
+        line-height: 26px;
+        height: 30px;
+        text-align: center;
+        float: left;
+        width: 90px;
+        color: rgb(255, 255, 255);
+
+        cursor: pointer;
+        -webkit-transition: all 0.1s ease-out;
+    }
+    #locationInput {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: rgba(0,0,0,0.2);  /* Semi-transparent background */
+    padding: 5px;
+    border-radius: 5px;
+}
+
+#address {
+    padding: 5px;
+    margin-right: 10px;
+    vertical-align: middle;
+}
+
+button {
+    padding: 5px 10px;
+    cursor: pointer;
+    background-color: #34cb57;  /* Reusing your green color */
+    border: none;
+    color: white;
+    vertical-align: middle;
+}
+
+button:hover {
+    background-color: #2ba045;
+}
+
+/* New CSS for tables */
+table {
+    width: 75%; 
+    margin-top: 20px;
+    border-collapse: collapse;
+}
+
+table, th, td {
+    border: 1px solid #dddddd;
+    padding: 8px;
+    text-align: left;
+}
+
+th {
+  background-color: #f2f2f2;
+  color: #333333;  
+}
+
+  </style>
+</head>
+<body>
+
+  <div id="container"></div>
+  <div id="popup" style="display: none; position: absolute; background-color: rgba(0, 0, 0, 0.7); color: white; padding: 10px;"></div>
+  
+  <div id="info">
+    The <a href="http://www.chromeexperiments.com/globe">WebGL Globe</a> is an
+    open platform for visualizing geographic data. <span
+      class="bull">&bull;</span> <a href="https://github.com/dataarts/webgl-globe">Get
+    the code</a> <span class="bull">&bull;</span> By the Google Data Arts Team
+  </div>
+  
+  <div id="title">
+   SatTracker
+  </div>
+  
+  <div id="locationInput">
+    <input type="text" id="address" placeholder="Enter address..." style="vertical-align: middle;">
+    <button id="addressButton">Find using address</button>
+    <button id="locationButton">Get my location</button>
+    
+
+    
+ <!-- User location table -->
+<table>
+  <thead>
+      <tr>
+          <th colspan="2">User Location</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>Latitude:</td>
+          <td id="userLatValue">-</td>
+      </tr>
+      <tr>
+          <td>Longitude:</td>
+          <td id="userLonValue">-</td>
+      </tr>
+  </tbody>
+</table>
+
+<!-- Button to find closest satellite -->
+<button id="closestSatelliteButton">Find Closest Satellite</button>
+
+<!-- Closest satellite data table -->
+<table>
+  <thead>
+      <tr>
+          <th colspan="2">Closest Satellite Data</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>Latitude:</td>
+          <td id="satLatValue">-</td>
+      </tr>
+      <tr>
+          <td>Longitude:</td>
+          <td id="satLonValue">-</td>
+      </tr>
+      <tr>
+          <td>Altitude:</td>
+          <td id="satAltValue">-</td>
+      </tr>
+      <tr>
+          <td>Name:</td>
+          <td id="satNameValue">-</td>
+      </tr>
+  </tbody>
+</table>
+</div>
+
+  <div id="currentInfo">   
+    <div id="satelliteData">
+        <h3>Selected Satellite</h3>
+        <table>
+            <tbody>
+                <tr>
+                    <td>Latitude:</td>
+                    <td id="latValue">-</td>
+                </tr>
+                <tr>
+                    <td>Longitude:</td>
+                    <td id="lngValue">-</td>
+                </tr>
+                <tr>
+                    <td>Altitude:</td>
+                    <td id="altValue">-</td>
+                </tr>
+                <tr>
+                    <td>Name:</td>
+                    <td id="nameValue">-</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <span id="LEO" class="satellite">LEO</span>
+    <span id="MEO" class="satellite">MEO</span>
+  
+<br /><br /> <br /><br />
+Use Up and down arrows zoom in and out. Use the mouse to rotate.<br /><br />Source data provided by <a href="http://wwwspace-track.org">Space-Track.org</a>.</div>
+<div id="popup" style="display: none; position: absolute; background-color: rgba(0, 0, 0, 0.7); color: white; padding: 10px;"></div>
+
+<script type="text/javascript" src="third-party/Detector.js"></script>
+<!--
+<script type="text/javascript" src="third-party/three.min.js"></script>
+-->
+<script type="text/javascript" src="third-party/new_three_min.js"></script>
+<script type="text/javascript" src="globe.js"></script>
+<script type="text/javascript" src="third-party/Tween.js"></script>
+<script type="text/javascript">
+
+  var globe = DAT.Globe(document.getElementById('container'), function(label) {
+    return new THREE.Color([0x34cb57, 0x666666, 0xdb0b00][label]);
+  });
+
+  var currentIndex = 0; // Keep track of the currently loaded data index
+
+  function loadDataAndUpdateGlobe(index) {
+    xhr = new XMLHttpRequest();
+    xhr.open('GET', 'test.json', true);
+    xhr.onreadystatechange = function(e) {
+      if (xhr.readyState === 4) {
+        if (xhr.status === 200) {
+          var data = JSON.parse(xhr.responseText);
+          if (data[index] && data[index][1]) {
+            console.log(data[index]);
+            window.data = data[index][1];
+            clearGlobe(); 
+            globe.createPoints();
+            globe.addData(data[index][1], { format: 'magnitude' });
+            globe.animate();
+            document.body.style.backgroundImage = 'none'; // Remove loading
+          }
+        }
+      }
+    };
+    xhr.send(null);
+  }
+
+  // Initial data load
+  loadDataAndUpdateGlobe(currentIndex);
+
+  // Event listener for MEO click
+  var meoElement = document.getElementById('MEO');
+  meoElement.addEventListener('click', function() {
+    currentIndex = 1; // Update the index to load data[1][1]
+    loadDataAndUpdateGlobe(currentIndex);
+    var activeElements = document.querySelectorAll('.active');
+    for (var i = 0; i < activeElements.length; i++) {
+      activeElements[i].classList.remove('active');
+    }
+    // Add 'active' to 'MEO' 
+    meoElement.classList.add('active');
+  });
+
+  var leoElement = document.getElementById('LEO');
+  leoElement.addEventListener('click', function() {
+    currentIndex = 0; // Update the index to load data[0][1]
+    loadDataAndUpdateGlobe(currentIndex);
+    //Clear active
+    var activeElements = document.querySelectorAll('.active');
+    for (var i = 0; i < activeElements.length; i++) {
+      activeElements[i].classList.remove('active');
+    }
+    // Add 'active' to the 'LEO' 
+    leoElement.classList.add('active');
+  });
+
+  // Function to clear the globe
+  function clearGlobe() {
+    console.log("Clearing Globe");
+
+    // Loop through each satellite cube and remove it from the scene
+    for (var i = satelliteCubes.length - 1; i >= 0; i--) {
+        var cube = satelliteCubes[i];
+        globe.scene.remove(cube); // Remove cube from scene
+
+        // Proper cleanup to ensure memory is released
+        cube.geometry.dispose();
+        cube.material.dispose();
+    }
+    satelliteCubes = [];
+    console.log("Satellite cubes cleared");
+
+    if (globe.points) {
+        globe.scene.remove(globe.points);
+        globe.points.geometry.dispose();
+        globe.points.material.dispose();
+        globe.points = null;
+        console.log("Globe points cleared");
+    }
+}
+
+</script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-249775-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+</body>
+
+</html>
