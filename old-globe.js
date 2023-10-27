@@ -12,18 +12,19 @@
  */
 
 var DAT = DAT || {};
+
+var GLOBE_RADIUS = 75;
 var satelliteCubes = [];
+let lastClickedSatellite = null; 
+
 let userLat;
 let userLon;
 
 
-
-var GLOBE_RADIUS = 75;
-
 DAT.Globe = function(container, colorFn) {
 
   colorFn = colorFn || function(x) {
-    var normalC = x / 30000
+    var normalC = x / 100000
     var c = new THREE.Color();
     c.setHSL( ( 0.6 - ( normalC * 0.5 ) ), 1.0, 0.5 );
     console.log(c.getHex());
@@ -152,7 +153,6 @@ DAT.Globe = function(container, colorFn) {
 //    point = new THREE.ParticleSystem(geometry);
 
     renderer = new THREE.WebGLRenderer({antialias: true});
-    
     renderer.setSize(w, h);
 
     renderer.domElement.style.position = 'absolute';
@@ -219,49 +219,43 @@ DAT.Globe = function(container, colorFn) {
       this.points = new THREE.Mesh(this._baseGeometry, new THREE.MeshBasicMaterial({
         color: 0xffffff,
         vertexColors: THREE.FaceColors,
-        morphTargets: false,
-        side: THREE.DoubleSide  // Make the material double-sided
+        morphTargets: false
       }));
 
       scene.add(this.points);
     }
-}
+  }
 
-
-
-function addPoint(lat, lng, size, color, subgeo) {
-  console.log("Adding point:", lat, lng, size, color);
-  var phi = (90 - lat) * Math.PI / 180;
-  var theta = (180 - lng) * Math.PI / 180;
-  var r = ((1 + (size / 100.0)) * GLOBE_RADIUS);
-
-  // Create a cube for this point
-  var geometry = new THREE.BoxGeometry(1, 1, 1);
-  var material = new THREE.MeshBasicMaterial({ color: color }); // Use the given color
-  var cube = new THREE.Mesh(geometry, material);
-
-  cube.position.x = r * Math.sin(phi) * Math.cos(theta);
-  cube.position.y = r * Math.cos(phi);
-  cube.position.z = r * Math.sin(phi) * Math.sin(theta);
-  cube.scale.set(4, 4, 4);  // Scale the cube
-  cube.lookAt(mesh.position); // Make the cube look at the mesh (globe center)
-  cube.updateMatrix();
-
-  scene.add(cube);  // Add the cube to the scene
-  satelliteCubes.push(cube); // Add the cube to the satelliteCubes array
-
+  function addPoint(lat, lng, size, color, subgeo) {
+    var phi = (90 - lat) * Math.PI / 180;
+    var theta = (180 - lng) * Math.PI / 180;
+    var r = ((1 + (size / 100.0)) * GLOBE_RADIUS);
   
-  // THREE.GeometryUtils.merge(subgeo, point);
-}
-
+    // Create a cube for this point
+    var geometry = new THREE.BoxGeometry(1, 1, 1);
+    var material = new THREE.MeshBasicMaterial({ color: color }); // Use the given color
+    var cube = new THREE.Mesh(geometry, material);
+  
+    cube.position.x = r * Math.sin(phi) * Math.cos(theta);
+    cube.position.y = r * Math.cos(phi);
+    cube.position.z = r * Math.sin(phi) * Math.sin(theta);
+    cube.scale.set(2, 2, 2);  // Scale the cube
+    cube.lookAt(mesh.position); // Make the cube look at the mesh (globe center)
+    cube.updateMatrix();
+  
+    scene.add(cube);  // Add the cube to the scene
+    satelliteCubes.push(cube); // Add the cube to the satelliteCubes array
+  
+    
+    // THREE.GeometryUtils.merge(subgeo, point);
+  }
+  
+  
 
 // Add an event listener for mouse clicks on the container
-container.addEventListener('click', onSatClick, false);
+container.addEventListener('click', onClick, false);
 
-let lastClickedSatellite = null; 
-
-//can click the sat, it creates a pop up, but with no information, in the if statement
-function onSatClick(event) {
+function onClick(event) {
   event.preventDefault();
 
   var raycaster = new THREE.Raycaster();
@@ -288,7 +282,7 @@ function onSatClick(event) {
     }
 
     // Change color of the clicked cube to red
-    clickedCube.material.color.set(0xff0000);   //can change this for red, blue, yellow, etc
+    clickedCube.material.color.set(0xff0000);
 
     // Update the lastClickedSatellite reference
     lastClickedSatellite = clickedCube;
@@ -311,8 +305,6 @@ function onSatClick(event) {
     }
   }
 }
-
-
 
 
 
@@ -377,6 +369,10 @@ function getCurrentLocation() {
       alert('Your browser does not support geolocation.');
   }
 }
+
+
+
+
 function haversineDistance(lat1, lon1, lat2, lon2) {
   const R = 6371; // Radius of the Earth in kilometers
   let dLat = toRad(lat2 - lat1);
@@ -392,29 +388,29 @@ function toRad(value) {
   return value * Math.PI / 180;
 }
 
-function findClosestSatellite(userLat, userLon, satellitesData) {
-  let closestSatellite = null;
-  let minDistance = Number.MAX_VALUE;
-
+function findClosestSatellites(userLat, userLon, satellitesData) {
+  let closestSatellites = [];
   for (let i = 0; i < satellitesData.length; i += 4) {
       let satelliteLat = parseFloat(satellitesData[i]);
       let satelliteLon = parseFloat(satellitesData[i + 1]);
       
       let distance = haversineDistance(userLat, userLon, satelliteLat, satelliteLon);
 
-      if (distance < minDistance) {
-          minDistance = distance;
-          closestSatellite = {
-              name: satellitesData[i + 3] || "Unnamed satellite", 
-              latitude: satelliteLat,
-              longitude: satelliteLon,
-              altitude: parseFloat(satellitesData[i + 2]),
-              distance: minDistance
-          };
-      }
+      let satellite = {
+          name: satellitesData[i + 3] || "Unnamed satellite", 
+          latitude: satelliteLat,
+          longitude: satelliteLon,
+          altitude: parseFloat(satellitesData[i + 2]),
+          distance: distance
+      };
+      
+      closestSatellites.push(satellite);
   }
-  return closestSatellite;
+  
+  // Sort the satellites by distance and return the top 10
+  return closestSatellites.sort((a, b) => a.distance - b.distance).slice(0, 10);
 }
+
 
 
 function computeClosestSatellite() {
@@ -424,20 +420,29 @@ function computeClosestSatellite() {
   console.log("Satellites Data:", window.data);
 
   if (userLat && userLon && window.data) {
-      let closest = findClosestSatellite(userLat, userLon, window.data);
-      if (closest) {
-          console.log("The closest satellite is:", closest.name);
-          // Update the satellite data table with the closest satellite's data
-          document.getElementById('satLatValue').textContent = closest.latitude.toFixed(3) + '°';
-          document.getElementById('satLonValue').textContent = closest.longitude.toFixed(3) + '°';
-          document.getElementById('satAltValue').textContent = closest.altitude.toFixed(3) + ' KM';
-          document.getElementById('satNameValue').textContent = closest.name;
+      let closestSatellites = findClosestSatellites(userLat, userLon, window.data);
+      if (closestSatellites && closestSatellites.length > 0) {
+          console.log("The closest satellite is:", closestSatellites[0].name);
+
+          // Directly select the table body by its ID
+          let tbody = document.getElementById('topSatellitesList');
+          
+          // Clear any previous content
+          tbody.innerHTML = '';
+
+          closestSatellites.forEach(sat => {
+              let row = tbody.insertRow(); // Create a new row
+              let cell1 = row.insertCell(0); 
+              let cell2 = row.insertCell(1);
+              
+              cell1.textContent = "Name:";
+              cell2.textContent = sat.name;
+          });
       } else {
-          console.log("Couldn't find a close satellite.");
+          console.log("Couldn't find close satellites.");
       }
   }
 }
-
 
 
 
@@ -458,15 +463,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 
-
-
-
-
-
-
-
-
-function onMouseDown(event) {
+  function onMouseDown(event) {
     event.preventDefault();
 
     container.addEventListener('mousemove', onMouseMove, false);
@@ -537,7 +534,7 @@ function onMouseDown(event) {
 
   function zoom(delta) {
     distanceTarget -= delta;
-    distanceTarget = distanceTarget > 1000 ? 1000 : distanceTarget;
+    distanceTarget = distanceTarget > 2000 ? 2000 : distanceTarget;
     distanceTarget = distanceTarget < 350 ? 350 : distanceTarget;
   }
 
@@ -597,7 +594,6 @@ function onMouseDown(event) {
   this.addData = addData;
   this.createPoints = createPoints;
   this.renderer = renderer;
-  renderer.domElement.addEventListener('click', onSatClick);
   this.scene = scene;
 
   return this;
