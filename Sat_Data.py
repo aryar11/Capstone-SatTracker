@@ -2,6 +2,7 @@ import pymysql
 import json
 from skyfield.api import EarthSatellite, Topos, load
 import boto3
+import math
 def connect_to_rds():
     connection = pymysql.connect(
         host='sattrack.ckiq4qoeqhbu.us-east-2.rds.amazonaws.com',
@@ -81,7 +82,8 @@ def fetch_user_tles(username):
                 geocentric = satellite.at(ts.now())
                 subpoint = geocentric.subpoint()
                 #satellites_for_category.extend([lat, lon, alt, name])
-                satellites_for_category.extend([ float(subpoint.latitude.degrees), float(subpoint.longitude.degrees), float(subpoint.elevation.km), name])
+                if(not math.isnan(float(subpoint.latitude.degrees)) and not math.isnan(float(subpoint.longitude.degrees))):
+                    satellites_for_category.extend([ float(subpoint.latitude.degrees), float(subpoint.longitude.degrees), float(subpoint.elevation.km), name])
             satellite_data.append(["Favorites", satellites_for_category])
 
         # Output to a JSON file

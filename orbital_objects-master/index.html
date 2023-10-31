@@ -302,7 +302,9 @@ table td:first-child {
 <br><br> 
 <span id="starlink" class="satellite">Starlink</span>
 <span id="thorad" class="satellite">Thorad</span>
-<span id="oneweb" class="satellite">Oneweb</span>  
+<span id="oneweb" class="satellite">Oneweb</span>
+<span id="favorites" class="satellite">Favorites</span>   
+<br> <br> <br> <br>
 
   <div id="satelliteData">
     <h3>Selected Satellite</h3>
@@ -347,7 +349,7 @@ Use Up and down arrows zoom in and out. Use the mouse to rotate.<br /><br /></di
   });
 
   var currentIndex = 0; // Keep track of the currently loaded data index
-
+  /*
   function loadDataAndUpdateGlobe(index) {
     xhr = new XMLHttpRequest();
     xhr.open('GET', 'test.json', true);
@@ -369,40 +371,78 @@ Use Up and down arrows zoom in and out. Use the mouse to rotate.<br /><br /></di
     };
     xhr.send(null);
   }
+  */
   function loadDataAndUpdateGlobe1(index) {
-  // Initialize the AWS SDK
-  AWS.config.update({
-    accessKeyId: 'AKIA2GBQBRJE53N4XPM3',
-    secretAccessKey: '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',
-    region: 'us-east-2',
-  });
+    // Initialize the AWS SDK
+    AWS.config.update({
+      accessKeyId: 'AKIA2GBQBRJE53N4XPM3',
+      secretAccessKey: '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',
+      region: 'us-east-2',
+    });
 
-  // Create an S3 object
-  var s3 = new AWS.S3();
+    // Create an S3 object
+    var s3 = new AWS.S3();
 
-  // Specify the S3 bucket and object (JSON file) key
-  var bucketName = 'satdate';
-  var objectKey = 'satellites.json';
+    // Specify the S3 bucket and object (JSON file) key
+    var bucketName = 'satdate';
+    var objectKey = 'satellites.json';
 
-  // Use the getObject method to retrieve the JSON file
-  s3.getObject({ Bucket: bucketName, Key: objectKey }, function (err, data) {
-    if (err) {
-      console.error('Error loading JSON file from S3:', err);
-    } else {
-      var jsonContent = data.Body.toString('utf-8');
-      var jsonData = JSON.parse(jsonContent);
+    // Use the getObject method to retrieve the JSON file
+    s3.getObject({ Bucket: bucketName, Key: objectKey }, function (err, data) {
+      if (err) {
+        console.error('Error loading JSON file from S3:', err);
+      } else {
+        var jsonContent = data.Body.toString('utf-8');
+        var jsonData = JSON.parse(jsonContent);
 
-      if (jsonData[index] && jsonData[index][1]) {
-        console.log(jsonData[index]);
-        window.data = jsonData[index][1];
-        clearGlobe();
-        globe.addData(jsonData[index][1], { format: 'magnitude' });
-        globe.createPoints();
-        globe.animate();
-        document.body.style.backgroundImage = 'none'; // Remove loading
+        if (jsonData[index] && jsonData[index][1]) {
+          
+          window.data = jsonData[index][1];
+          clearGlobe();
+          globe.addData(jsonData[index][1], { format: 'magnitude' });
+          globe.createPoints();
+          globe.animate();
+          document.body.style.backgroundImage = 'none'; // Remove loading
+        }
       }
-    }
-  });
+    });
+  }
+  function loadDataAndUpdateGlobeFAVORITE() {
+    // Initialize the AWS SDK
+    AWS.config.update({
+      accessKeyId: 'AKIA2GBQBRJE53N4XPM3',
+      secretAccessKey: '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',
+      region: 'us-east-2',
+    });
+
+    // Create an S3 object
+    var s3 = new AWS.S3();
+
+    // Specify the S3 bucket and object (JSON file) key
+    var bucketName = 'satdate';
+    var objectKey = 'favoriteData.json';
+    
+    // Use the getObject method to retrieve the JSON file
+    s3.getObject({ Bucket: bucketName, Key: objectKey }, function (err, data) {
+      if (err) {
+        console.error('Error loading JSON file from S3:', err);
+      } 
+      else {
+        
+        var jsonContent = data.Body.toString('utf-8');
+        var jsonData = JSON.parse(jsonContent);
+        
+        if (jsonData[0] && jsonData[0][1]) {
+          
+          window.data = jsonData[0][1];
+          clearGlobe();
+          globe.addData(jsonData[0][1], { format: 'magnitude' });
+          globe.createPoints();
+          globe.animate();
+          document.body.style.backgroundImage = 'none'; // Remove loading
+        }
+      }
+    });
   }
   // Initial data load
   loadDataAndUpdateGlobe1(currentIndex);
@@ -485,6 +525,17 @@ Use Up and down arrows zoom in and out. Use the mouse to rotate.<br /><br /></di
     }
     // Add 'active' to the 'tle' 
     onewebelement.classList.add('active');
+  });
+  var Favoriteelement = document.getElementById('favorites');
+  Favoriteelement.addEventListener('click', function() {
+    loadDataAndUpdateGlobeFAVORITE();
+    //Clear active
+    var activeElements = document.querySelectorAll('.active');
+    for (var i = 0; i < activeElements.length; i++) {
+      activeElements[i].classList.remove('active');
+    }
+    // Add 'active' to the 'tle' 
+    Favoriteelement.classList.add('active');
   });
   // Function to clear the globe
   function clearGlobe() {

@@ -56,7 +56,7 @@
                         <a href="indexin.html" class="navbar_links"> Home </a>
                     </li>
                     <li class="navbar_item">
-                        <a href="tracker.html" class="navbar_links"> Tracker </a>
+                        <a href="tracker/index.html" class="navbar_links"> Tracker </a>
                     </li>
 
                     <li class="navbar_item">
@@ -107,6 +107,8 @@
     </div>
 </body>
 <script>
+    // Initialize local storage of favSat as an empty array
+    localStorage.setItem("favSat", "[]");
     document.addEventListener("DOMContentLoaded", function () {
         // Reference the HTML elements
         const dataTable = document.getElementById("data-table");
@@ -120,8 +122,7 @@
             const selectedTable = document.getElementById("DT").value;
             // Get the username from local storage
             const username = localStorage.getItem("username");
-            // Initialize local storage of favSat as an empty array
-            localStorage.setItem("favSat", "[]");
+
             // Fetch data from Lambda function
             fetch(`https://9xjza9f212.execute-api.us-east-2.amazonaws.com/default/satData?datatable=${selectedTable}&username=${username}`)
                 .then(response => response.json())
@@ -174,10 +175,12 @@
                             let retString = localStorage.getItem("favSat");
                             let retArray = JSON.parse(retString);
                             // Add the new item to the array
-                            retArray.push(item[1]);
-                            console.log("Added: ", JSON.stringify(retArray))
-                            // Save the updated array back to local storage
-                            localStorage.setItem("favSat", JSON.stringify(retArray));
+                            if(!retArray.includes(item[1])){
+                                retArray.push(item[1]);
+                                console.log("Added: ", JSON.stringify(retArray))
+                                // Save the updated array back to local storage
+                                localStorage.setItem("favSat", JSON.stringify(retArray));
+                            }
                         }
                     });
 
@@ -237,16 +240,38 @@
     // Add an event listener to the "Save Favorites" button
     const saveFavoritesButton = document.getElementById("save-favorites-button");
     saveFavoritesButton.addEventListener("click", function () {
-        // Handle saving favorite satellites here
-        // You can access the list of favorite satellites from local storage:
-        const favoriteSatellites = JSON.parse(localStorage.getItem("favSat"));
-        
-        // You can now use the favoriteSatellites array as needed.
-        // For example, you can send it to the server or perform any other action.
+        const favoriteSatellites = localStorage.getItem("favSat");
+        const username = localStorage.getItem("username");
+        console.log(favoriteSatellites);
+        const data = {
+            username: username,
+            favoriteSatellites: favoriteSatellites,
+        };
 
-        // For now, let's log it to the console.
-        console.log("Favorite Satellites: ", JSON.stringify(favoriteSatellites));
-        // You can further process this list as per your requirements.
+        fetch("https://tj4vp8k1r1.execute-api.us-east-2.amazonaws.com/default/updateUserFav2", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data),
+            mode: "no-cors",
+        })
+
+        .then(response => {
+            if (response.ok) {
+                // Request was successful, you can add further logic here if needed
+                console.log("Data sent successfully.");
+            } else {
+                // Handle errors here
+                console.error("Failed to send data.");
+            }
+        })
+        .catch(error => {
+            console.error("Error:", error);
+        });
     });
+
+
+
 </script>
 </html>
