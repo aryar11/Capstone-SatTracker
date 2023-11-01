@@ -55,7 +55,7 @@
                 </div>
                 <div class="form-group">
                     <label>Username</label>
-                    <input type="text" name="username" class="form-control" maxlength = 50 pattern= "[a-zA-Z0-9]+" required>
+                    <input type="text" id="username" name="username" class="form-control" maxlength = 50 pattern= "[a-zA-Z0-9]+" required>
                 </div>
                 <div class="form-group">
                     <label>Password</label>
@@ -86,3 +86,26 @@
             </form>
         </div>
     </div>
+    <script>
+        // Initialize the username variable with the value from local storage
+        let username = localStorage.getItem('username');
+    
+        const usernameInput = document.querySelector('input[name="username"]');
+        
+        // Set the input field value to the stored username
+        usernameInput.value = username;
+    
+        // Add an event listener for the input event
+        usernameInput.addEventListener('input', function (event) {
+            // Get the updated username input value
+            const updatedUsername = event.target.value;
+            
+            // Save the updated username in local storage
+            localStorage.setItem('username', updatedUsername);
+            
+            // Update the local variable as well
+            username = updatedUsername;
+        });
+    </script>
+    
+</body>
