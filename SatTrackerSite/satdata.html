@@ -35,9 +35,12 @@
     width: 10%;
     opacity: 0.9;
     }
+    #save-favorites-button, #clear-favorites-button {
+    float:right;
+    margin-left: 1px; 
+    }
     #save-favorites-button {
-        float: right;
-        margin-right: 120px; 
+    margin-right: 120px; 
     }
 </style>
 <body>
@@ -59,6 +62,9 @@
                         <a href="tracker/index.html" class="navbar_links"> Tracker </a>
                     </li>
 
+                    <li class="navbar_item">
+                        <a href="satdata.html" class="navbar_links"> Data </a>
+                    </li>
                     <li class="navbar_item">
                         <a href="about-in.html" class="navbar_links"> About </a>
                     </li>
@@ -91,6 +97,7 @@
             <div class="form-group">
                 <input type="submit" name="submit" class="regbtn" value="Generate">
                 <button id="save-favorites-button" class="regbtn">Save Favorites</button>
+                <button id="clear-favorites-button" class="regbtn">Clear Favorites</button>
             </div>
             <table id="data-table">
                 <tr>
@@ -128,7 +135,13 @@
                 .then(response => response.json())
                 .then(data => {
                     const userdata = data.userdata[0][0];
-                    const userdataArray = userdata.split(',');
+                    let userdataArray =  "No FavSat";
+                    if(userdata != null){
+                        //console.log(userdata);
+                        //const userdataArray = userdata.split(',');
+                        userdataArray = userdata;
+                    }
+     
                     data = data.data;
                     // Clear the existing table data
                     dataTable.innerHTML = "";
@@ -261,9 +274,11 @@
             if (response.ok) {
                 // Request was successful, you can add further logic here if needed
                 console.log("Data sent successfully.");
+                location.reload();
             } else {
                 // Handle errors here
                 console.error("Failed to send data.");
+                location.reload();
             }
         })
         .catch(error => {
@@ -271,6 +286,39 @@
         });
     });
 
+    // Add an event listener to the "Clear Favorites" button
+    const clearFavoritesButton = document.getElementById("clear-favorites-button");
+    clearFavoritesButton.addEventListener("click", function () {
+        const username = localStorage.getItem("username");
+        const data = {
+            username: username
+        };
+        // Send the username to the Lambda function
+        fetch("https://6fno0r2fdj.execute-api.us-east-2.amazonaws.com/default/clearFavorites", {
+            method: "POST", // Use POST method to send data
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data), // Send the username in the request body
+            mode: "no-cors",
+        })
+            .then(response => {
+                if (response.ok) {
+                    // Request was successful, you can add further logic here if needed
+                    console.log("Favorites cleared successfully.");
+
+                    // Refresh the page upon success
+                    location.reload();
+                } else {
+                    // Handle errors here
+                    console.error("Failed to clear favorites.");
+                    location.reload();
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+            });
+    });
 
 
 </script>

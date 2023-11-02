@@ -16,6 +16,7 @@ var DAT = DAT || {};
 var GLOBE_RADIUS = 75;
 var satelliteCubes = [];
 let lastClickedSatellite = null; 
+var closestSatellitesIndices = [];
 
 let userLat;
 let userLon;
@@ -114,7 +115,7 @@ DAT.Globe = function(container, colorFn) {
     shader = Shaders['earth'];
     uniforms = THREE.UniformsUtils.clone(shader.uniforms);
 
-    uniforms['texture'].value = THREE.ImageUtils.loadTexture(imgDir+'world.jpg');
+    uniforms['texture'].value = THREE.ImageUtils.loadTexture(imgDir+'world1.jpg');
 
     material = new THREE.ShaderMaterial({
 
@@ -239,56 +240,17 @@ DAT.Globe = function(container, colorFn) {
     cube.position.x = r * Math.sin(phi) * Math.cos(theta);
     cube.position.y = r * Math.cos(phi);
     cube.position.z = r * Math.sin(phi) * Math.sin(theta);
-    cube.scale.set(2, 2, 2);  // Scale the cube
+    cube.scale.set(1, 1, 1);  // Scale the cube
     cube.lookAt(mesh.position); // Make the cube look at the mesh (globe center)
     cube.updateMatrix();
   
     scene.add(cube);  // Add the cube to the scene
     satelliteCubes.push(cube); // Add the cube to the satelliteCubes array
-  
-    
-    // THREE.GeometryUtils.merge(subgeo, point);
   }
   
   
 
-// Add an event listener for mouse clicks on the container
-container.addEventListener('click', onClick, false);
-
-function onClick(event) {
-  event.preventDefault();
-
-  var raycaster = new THREE.Raycaster();
-  var mouseVector = new THREE.Vector2(
-      (event.clientX / window.innerWidth) * 2 - 1,
-      -(event.clientY / window.innerHeight) * 2 + 1
-  );
-
-  raycaster.ray.origin.copy(camera.position);
-  raycaster.ray.direction.set(mouseVector.x, mouseVector.y, 0.5)
-      .unproject(camera)
-      .sub(camera.position)
-      .normalize();
-
-  var intersects = raycaster.intersectObjects(satelliteCubes);  // Check for intersection with all cubes in satelliteCubes array
-  console.log("Intersections found:", intersects.length);
-
-  if (intersects.length > 0) {
-    var clickedCube = intersects[0].object;
-
-    // If there was a previously clicked satellite, revert its color
-    if (lastClickedSatellite) {
-      lastClickedSatellite.material.color.set(0xffffff); //the original color is white
-    }
-
-    // Change color of the clicked cube to red
-    clickedCube.material.color.set(0xff0000);
-
-    // Update the lastClickedSatellite reference
-    lastClickedSatellite = clickedCube;
-
-    var satelliteIndex = satelliteCubes.indexOf(clickedCube);  // Get the index of the clicked cube within the satelliteCubes array
-
+  function updateSatelliteDetails(satelliteIndex) {
     if (satelliteIndex * 4 + 3 < window.data.length) {
       var rawLat = parseFloat(window.data[satelliteIndex * 4]);
       var rawLng = parseFloat(window.data[satelliteIndex * 4 + 1]);
@@ -301,10 +263,61 @@ function onClick(event) {
       document.getElementById('nameValue').textContent = name;
     } else {
       console.error("Invalid satellite index:", satelliteIndex);
-      console.log(clickedCube); // Logs the entire clicked cube object
     }
   }
+
+
+// Add an event listener for mouse clicks on the container
+container.addEventListener('click', onClick, false);
+
+function onClick(event) {
+  event.preventDefault();
+
+  var raycaster = new THREE.Raycaster();
+  var mouseVector = new THREE.Vector2(
+    (event.clientX / window.innerWidth) * 2 - 1,
+    -(event.clientY / window.innerHeight) * 2 + 1
+  );
+
+  raycaster.ray.origin.copy(camera.position);
+  raycaster.ray.direction.set(mouseVector.x, mouseVector.y, 0.5)
+    .unproject(camera)
+    .sub(camera.position)
+    .normalize();
+
+  var intersects = raycaster.intersectObjects(satelliteCubes); // Check for intersection with all cubes in satelliteCubes array
+  console.log("Intersections found:", intersects.length);
+
+  if (intersects.length > 0) {
+    var clickedCube = intersects[0].object;
+    var satelliteIndex = satelliteCubes.indexOf(clickedCube); // Determine the index of the clicked satellite
+
+    // Always revert the color of the last clicked satellite to its original state before processing the new click
+    if (lastClickedSatellite) {
+      if (closestSatellitesIndices.includes(satelliteCubes.indexOf(lastClickedSatellite))) {
+        lastClickedSatellite.material.color.set(0x00ff00); // Reset to green if it's a closest satellite
+      } else {
+        lastClickedSatellite.material.color.set(0xffffff); // Reset to white otherwise
+      }
+    }
+
+    // Check if the clicked satellite is one of the ten closest satellites
+    if (closestSatellitesIndices.includes(satelliteIndex)) {
+      clickedCube.material.color.set(0xff0000); // Set to red
+      lastClickedSatellite = clickedCube;
+    } else {
+      // If the clicked object is not one of the ten closest satellites
+      clickedCube.material.color.set(0xff0000); // Set to red
+      lastClickedSatellite = clickedCube;
+    }
+
+    // Update the UI with the clicked satellite's details
+    updateSatelliteDetails(satelliteIndex);
+  }
 }
+
+
+// Function
 
 
 
@@ -324,7 +337,10 @@ function geocodeAddress() {
               userLat = latitude;
               userLon = longitude;
 
-              console.log('Latitude:', latitude, 'Longitude:', longitude);  // Logging the resulting latitude and longitude
+              console.log('Latitude:', latitude, 'Longitude:', longitude);
+              var pointSize = 1.0; // Specify the desired size for the point
+               var pointColor = 0xFFFF00;
+              addPoint(userLat, userLon, pointSizesize, pointColorcolor);  // Logging the resulting latitude and longitude
 
               // Updating the User Location table with the fetched latitude and longitude
               document.getElementById('userLatValue').textContent = latitude;
@@ -354,7 +370,11 @@ function getCurrentLocation() {
           userLat = latitude;
           userLon = longitude;
 
-          console.log('Latitude:', latitude, 'Longitude:', longitude);  // Logging the current latitude and longitude
+          console.log('Latitude:', latitude, 'Longitude:', longitude); 
+          var pointSize = 1.0; // Specify the desired size for the point
+          var pointColor = 0xFFFF00;
+          addPoint(userLat, userLon, pointSize, pointColor);
+           // Logging the current latitude and longitude
 
           // Updating the User Location table with the current latitude and longitude
           document.getElementById('userLatValue').textContent = latitude;
@@ -388,29 +408,29 @@ function toRad(value) {
   return value * Math.PI / 180;
 }
 
-function findClosestSatellite(userLat, userLon, satellitesData) {
-  let closestSatellite = null;
-  let minDistance = Number.MAX_VALUE;
-
+function findClosestSatellites(userLat, userLon, satellitesData) {
+  let closestSatellites = [];
   for (let i = 0; i < satellitesData.length; i += 4) {
       let satelliteLat = parseFloat(satellitesData[i]);
       let satelliteLon = parseFloat(satellitesData[i + 1]);
       
       let distance = haversineDistance(userLat, userLon, satelliteLat, satelliteLon);
 
-      if (distance < minDistance) {
-          minDistance = distance;
-          closestSatellite = {
-              name: satellitesData[i + 3] || "Unnamed satellite", 
-              latitude: satelliteLat,
-              longitude: satelliteLon,
-              altitude: parseFloat(satellitesData[i + 2]),
-              distance: minDistance
-          };
-      }
+      let satellite = {
+          name: satellitesData[i + 3] || "Unnamed satellite", 
+          latitude: satelliteLat,
+          longitude: satelliteLon,
+          altitude: parseFloat(satellitesData[i + 2]),
+          distance: distance
+      };
+      
+      closestSatellites.push(satellite);
   }
-  return closestSatellite;
+  
+  // Sort the satellites by distance and return the top 10
+  return closestSatellites.sort((a, b) => a.distance - b.distance).slice(0, 10);
 }
+
 
 
 function computeClosestSatellite() {
@@ -420,19 +440,125 @@ function computeClosestSatellite() {
   console.log("Satellites Data:", window.data);
 
   if (userLat && userLon && window.data) {
-      let closest = findClosestSatellite(userLat, userLon, window.data);
-      if (closest) {
-          console.log("The closest satellite is:", closest.name);
-          // Update the satellite data table with the closest satellite's data
-          document.getElementById('satLatValue').textContent = closest.latitude.toFixed(3) + '°';
-          document.getElementById('satLonValue').textContent = closest.longitude.toFixed(3) + '°';
-          document.getElementById('satAltValue').textContent = closest.altitude.toFixed(3) + ' KM';
-          document.getElementById('satNameValue').textContent = closest.name;
+    let closestSatellites = findClosestSatellites(userLat, userLon, window.data);
+    console.log(closestSatellites);
+    if (closestSatellites && closestSatellites.length > 0) {
+        console.log("The closest satellite is:", closestSatellites[0].name);
+
+        // Clear the global closestSatellitesIndices array
+        closestSatellitesIndices.length = 0;
+
+        for (let i = 0; i < satelliteCubes.length; i++) {
+            // Check if the satellite at this index is one of the closest
+            if (closestSatellites.some(sat => sat.name === window.data[i * 4 + 3])) {
+                satelliteCubes[i].material.color.set(0x00ff00);  // Set color to green
+                closestSatellitesIndices.push(i);  // Store the index in the global array
+            }
+        }
+    
+
+
+
+          // Existing code for updating the DOM
+          let tbody = document.getElementById('topSatellitesList');
+          tbody.innerHTML = '';
+          closestSatellites.forEach(sat => {
+              let row = tbody.insertRow();
+              let cell1 = row.insertCell(0);
+              let cell2 = row.insertCell(1);
+              cell1.textContent = "Name:";
+              cell2.textContent = sat.name;
+          });
       } else {
-          console.log("Couldn't find a close satellite.");
+          console.log("Couldn't find close satellites.");
       }
   }
 }
+
+function toggleCollapse() {
+  const tbody = document.getElementById('topSatellitesList');
+  if (tbody.style.display === "none" || tbody.style.display === "") {
+      tbody.style.display = "table-row-group"; // or "block"
+  } else {
+      tbody.style.display = "none";
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Get the search input element
+  var searchInput = document.getElementById('satelliteSearch');
+
+  // Function to handle the search input event
+  function handleSearchInput(event) {
+    var searchQuery = event.target.value;  // Get the current value of the search input
+    if (searchQuery.length > 0) {
+      var results = filterSatellites(searchQuery);  // Filter satellites based on the search query
+      displaySearchResults(results);  // Display the search results
+    } else {
+      displaySearchResults([]);  // If the query is empty, clear the results
+    }
+  }
+
+  // Attach the event listener to the search input
+  searchInput.addEventListener('keyup', handleSearchInput);
+});
+
+function filterSatellites(searchQuery) {
+  var results = [];
+  for (var i = 0; i < window.data.length; i += 4) {
+    var satelliteName = window.data[i + 3];
+    if (satelliteName.toLowerCase().includes(searchQuery.toLowerCase())) {
+      results.push({name: satelliteName, index: i / 4});
+      if (results.length >= 3) {
+        break;
+      }
+    }
+  }
+  return results;
+}
+
+function displaySearchResults(results) {
+  var searchResults = document.getElementById('searchResults');
+  searchResults.innerHTML = '';
+  results.forEach(function(result) {
+    var li = document.createElement('li');
+    li.textContent = result.name;
+    li.addEventListener('click', function() {
+      // Before updating details, change the previously clicked satellite to its original color
+      if (lastClickedSatellite) {
+        if (closestSatellitesIndices.includes(satelliteCubes.indexOf(lastClickedSatellite))) {
+          lastClickedSatellite.material.color.set(0x00ff00); // Closest satellite color
+        } else {
+          lastClickedSatellite.material.color.set(0xffffff); // Default satellite color
+        }
+      }
+      // Now highlight the new clicked satellite and update details
+      highlightClickedSatellite(result.index); // Highlight the new clicked satellite
+      updateSatelliteDetails(result.index); // Update the UI when a search result is clicked
+    });
+    searchResults.appendChild(li);
+  });
+  searchResults.style.display = results.length ? 'block' : 'none';
+}
+
+// The highlightClickedSatellite function
+function highlightClickedSatellite(satelliteIndex) {
+  // Get the satellite cube using the index
+  var clickedCube = satelliteCubes[satelliteIndex];
+  if (clickedCube) {
+    clickedCube.material.color.set(0xff0000); // Set to red to highlight the clicked satellite
+    lastClickedSatellite = clickedCube; // Keep track of the last clicked satellite
+  } else {
+    console.error("Could not find a satellite cube at the provided index:", satelliteIndex);
+  }
+}
+
+
+
+
+
+
+document.getElementById("collapseButton").addEventListener("click", toggleCollapse);
 
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -447,7 +573,7 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Bind onSatelliteClick to the container (assuming it's the WebGL rendering area)
   var globeContainer = document.getElementById('container');
-  globeContainer.addEventListener('click', onSatelliteClick);
+  globeContainer.addEventListener('click', onClick);
 });
 
 
