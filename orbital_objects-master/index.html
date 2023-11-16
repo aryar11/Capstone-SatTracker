@@ -241,6 +241,7 @@ table td:first-child {
 /* Initially hide the table body */
 #topSatellitesList {
     display: none;
+    
 }
 
 
@@ -261,16 +262,22 @@ table td:first-child {
 }
 
 #searchResults {
-  background-color: gray;
   border-radius: 3px;
-  max-height: 150px;
+  max-height: 85px;
   overflow-y: auto;
   cursor: pointer;
 }
 
+#searchResults li {
+  font-size: 10px; /* Smaller font size */
+  padding: 1px; /* Smaller padding */
+  margin: 1px; /* Smaller margin */
+  list-style-type: none; /* Optional: removes bullet points */
+}
+
 #legend {
   position: absolute;
-  bottom: 10px; /* Adjust as needed, or use 'top' if more appropriate */
+  bottom: 1px; /* Adjust as needed, or use 'top' if more appropriate */
   left: 20px;
   background-color: transparent;
   padding: 10px;
