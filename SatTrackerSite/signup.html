@@ -46,7 +46,9 @@
         <div class="signup_cont">
             <h1>Register</h1>
             <p>Complete the following fields to create an account.</p>
-            <p>Passwords must be between 6 to 50 characters in length.</p>
+            <p>Usernames & Passwords must be between 6 to 50 characters in length.</p>
+            <P>Usernames may only consist of letters and numbers. </P>
+
             
             <form action="https://cd3tvt453d.execute-api.us-east-2.amazonaws.com/default/updateUserDB_REMAKE" method="get">
                 <div class="form-group">
@@ -55,7 +57,7 @@
                 </div>
                 <div class="form-group">
                     <label>Username</label>
-                    <input type="text" id="username" name="username" class="form-control" maxlength = 50 pattern= "[a-zA-Z0-9]+" required>
+                    <input type="text" name="username" class="form-control" maxlength = 50 pattern= "[a-zA-Z0-9]+" required>
                 </div>
                 <div class="form-group">
                     <label>Password</label>
@@ -63,7 +65,7 @@
                 </div>
                 <div class="form-group">
                     <label>Confirm Password</label>
-                    <input type="password" name="confirm_password" class="form-control" required>
+                    <input type="password" name="confirm_password" class="form-control" maxlength = 50 required>
                 </div>
                 <div class="SQ_drop">
                     <label>Security Question</label>
@@ -75,7 +77,7 @@
                 </div>
                 <div class="form-group">
                     <label>Security Question Answer</label>
-                    <input type="text" name="security_answer" class="form-control" required>
+                    <input type="text" name="security_answer" class="form-control" maxlength = 50 required>
                 </div>
                 <div class="form-group">
                     <input type="submit" name="submit" class="regbtn" value="Register">
@@ -86,26 +88,3 @@
             </form>
         </div>
     </div>
-    <script>
-        // Initialize the username variable with the value from local storage
-        let username = localStorage.getItem('username');
-    
-        const usernameInput = document.querySelector('input[name="username"]');
-        
-        // Set the input field value to the stored username
-        usernameInput.value = username;
-    
-        // Add an event listener for the input event
-        usernameInput.addEventListener('input', function (event) {
-            // Get the updated username input value
-            const updatedUsername = event.target.value;
-            
-            // Save the updated username in local storage
-            localStorage.setItem('username', updatedUsername);
-            
-            // Update the local variable as well
-            username = updatedUsername;
-        });
-    </script>
-    
-</body>
