@@ -17,6 +17,7 @@ var GLOBE_RADIUS = 75;
 var satelliteCubes = [];
 let lastClickedSatellite = null; 
 var closestSatellitesIndices = [];
+var userLocationMarker;
 
 let userLat;
 let userLon;
@@ -115,7 +116,7 @@ DAT.Globe = function(container, colorFn) {
     shader = Shaders['earth'];
     uniforms = THREE.UniformsUtils.clone(shader.uniforms);
 
-    uniforms['texture'].value = THREE.ImageUtils.loadTexture(imgDir+'world1.jpg');
+    uniforms['texture'].value = THREE.ImageUtils.loadTexture(imgDir+'earth.jpg');
 
     material = new THREE.ShaderMaterial({
 
@@ -240,7 +241,7 @@ DAT.Globe = function(container, colorFn) {
     cube.position.x = r * Math.sin(phi) * Math.cos(theta);
     cube.position.y = r * Math.cos(phi);
     cube.position.z = r * Math.sin(phi) * Math.sin(theta);
-    cube.scale.set(1, 1, 1);  // Scale the cube
+    cube.scale.set(2, 2, 2);  // Scale the cube
     cube.lookAt(mesh.position); // Make the cube look at the mesh (globe center)
     cube.updateMatrix();
   
@@ -316,8 +317,42 @@ function onClick(event) {
   }
 }
 
+function plotUserLocation(lat, lon) {
+  // Remove the existing marker if it exists
+  if (userLocationMarker) {
+    scene.remove(userLocationMarker);
+    userLocationMarker = null;
+  }
 
-// Function
+  // Load the star texture with transparency
+  var texture = new THREE.TextureLoader().load('star-removebg-preview.png'); // Ensure 'star.png' is in the correct directory
+  var material = new THREE.SpriteMaterial({ 
+    map: texture, 
+    color: 0xffff00, // Yellow color
+    depthTest: false, // This will make the sprite always render on top
+    transparent: true // Use the alpha channel for transparency
+  });
+
+  // Create the sprite with the material
+  userLocationMarker = new THREE.Sprite(material);
+
+  // Convert lat/lon to spherical coordinates
+  var phi = (90 - lat) * Math.PI / 180;
+  var theta = (180 - lon) * Math.PI / 180;
+  var r = GLOBE_RADIUS;
+
+  // Position the sprite slightly above the globe surface to prevent z-fighting
+  userLocationMarker.position.x = (r + 0.1) * Math.sin(phi) * Math.cos(theta);
+  userLocationMarker.position.y = (r + 0.1) * Math.cos(phi);
+  userLocationMarker.position.z = (r + 0.1) * Math.sin(phi) * Math.sin(theta);
+
+  // Adjust the size of the sprite as needed
+  userLocationMarker.scale.set(7, 7, 7); // Adjust the size as needed
+
+  // Add the sprite to the scene
+  scene.add(userLocationMarker);
+}
+
 
 
 
@@ -336,11 +371,11 @@ function geocodeAddress() {
 
               userLat = latitude;
               userLon = longitude;
+              plotUserLocation(userLat, userLon)
+
 
               console.log('Latitude:', latitude, 'Longitude:', longitude);
-              var pointSize = 1.0; // Specify the desired size for the point
-               var pointColor = 0xFFFF00;
-              addPoint(userLat, userLon, pointSize, pointColor);  // Logging the resulting latitude and longitude
+              
 
               // Updating the User Location table with the fetched latitude and longitude
               document.getElementById('userLatValue').textContent = latitude;
@@ -369,11 +404,9 @@ function getCurrentLocation() {
 
           userLat = latitude;
           userLon = longitude;
+          plotUserLocation(userLat, userLon)
 
           console.log('Latitude:', latitude, 'Longitude:', longitude); 
-          var pointSize = 1.0; // Specify the desired size for the point
-          var pointColor = 0xFFFF00;
-          addPoint(userLat, userLon, pointSize, pointColor);
            // Logging the current latitude and longitude
 
           // Updating the User Location table with the current latitude and longitude
@@ -509,7 +542,7 @@ function filterSatellites(searchQuery) {
     var satelliteName = window.data[i + 3];
     if (satelliteName.toLowerCase().includes(searchQuery.toLowerCase())) {
       results.push({name: satelliteName, index: i / 4});
-      if (results.length >= 3) {
+      if (results.length >= 5) {
         break;
       }
     }
