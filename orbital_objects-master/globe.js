@@ -340,7 +340,7 @@ function geocodeAddress() {
               console.log('Latitude:', latitude, 'Longitude:', longitude);
               var pointSize = 1.0; // Specify the desired size for the point
                var pointColor = 0xFFFF00;
-              addPoint(userLat, userLon, pointSizesize, pointColorcolor);  // Logging the resulting latitude and longitude
+              addPoint(userLat, userLon, pointSize, pointColor);  // Logging the resulting latitude and longitude
 
               // Updating the User Location table with the fetched latitude and longitude
               document.getElementById('userLatValue').textContent = latitude;
