@@ -30,7 +30,7 @@
                     </a>
                 </li> -->
                 <li class="navbar_item">
-                    <a href="about-in.html" class="navbar_links"> About </a>
+                    <a href="about.html" class="navbar_links"> About </a>
                 </li>
                 
                 <li class="navbar_btn2">
@@ -45,15 +45,18 @@
     <div class="signup">
         <div class="signup_cont">
             <h1>Register</h1>
+            <br>
             <p>Complete the following fields to create an account.</p>
             <p>Usernames & Passwords must be between 6 to 50 characters in length.</p>
             <P>Usernames may only consist of letters and numbers. </P>
+            <p> For names & security answers, please use letters only. </p>
+            <br>
 
             
             <form action="https://cd3tvt453d.execute-api.us-east-2.amazonaws.com/default/updateUserDB_REMAKE" method="get">
                 <div class="form-group">
                     <label>Name</label>
-                    <input type="text" name="name" class="form-control" maxlength = 50 pattern ="[a-zA-Z]+" required>
+                    <input type="text" name="name" class="form-control" maxlength = 50  required>
                 </div>
                 <div class="form-group">
                     <label>Username</label>
@@ -88,3 +91,18 @@
             </form>
         </div>
     </div>
+    <script>
+    
+        const usernameInput = document.querySelector('input[name="username"]');
+    
+        // Add an event listener for the input event
+        usernameInput.addEventListener('input', function (event) {
+            // Get the updated username input value
+            const updatedUsername = event.target.value;
+            
+            // Save the updated username in local storage
+            localStorage.setItem('username', updatedUsername);
+            console.log(localStorage.getItem("username"));
+        });
+    </script>
+    </body>

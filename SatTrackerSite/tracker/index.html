@@ -186,7 +186,7 @@ button.closestSatelliteButton{
 }
 
 button:hover {
-    background-color: #2ba045;
+    background-color: #4837ff;
 }
 
 /* New CSS for tables */
@@ -241,35 +241,70 @@ table td:first-child {
 /* Initially hide the table body */
 #topSatellitesList {
     display: none;
+    
 }
 
 
 
 #searchBar {
-  /* Remove absolute positioning to allow natural document flow */
-  text-align: center; /* To center the search bar */
-  margin-top: 600px; /* Adjust this value as needed to create space below the table */
   position: absolute;
+  top: 450px; /* Adjust this value as needed to position the search bar higher */
+  left: 1px;
   width: 270px;
-  margin-left: 30px;
+  text-align: center;
 }
 
 #satelliteSearch {
   padding: 10px;
   font-size: 16px;
-  
-  margin-bottom: 10px; /* Space above the search results */
+  margin-bottom: 10px;
   box-sizing: border-box;
 }
 
 #searchResults {
-  /* This will automatically appear below the search bar */
-  background-color: gray;
   border-radius: 3px;
-  max-height: 150px;
-  overflow-y: auto; /* Only show scrollbar when necessary */
-  
-  
+  max-height: 85px;
+  overflow-y: auto;
+  cursor: pointer;
+}
+
+#searchResults li {
+  font-size: 10px; /* Smaller font size */
+  padding: 1px; /* Smaller padding */
+  margin: 1px; /* Smaller margin */
+  list-style-type: none; /* Optional: removes bullet points */
+}
+
+#legend {
+  position: absolute;
+  bottom: 1px; /* Adjust as needed, or use 'top' if more appropriate */
+  left: 20px;
+  background-color: transparent;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+#legend ul {
+    list-style: none;
+    padding: 0;
+}
+
+#legend li {
+    margin-bottom: 5px;
+    font-size: 10px; /* Adjust as needed */
+}
+
+.legend-icon {
+    display: inline-block;
+    width: 10px; /* Adjust as needed */
+    height: 10px; /* Adjust as needed */
+    margin-right: 10px;
+    border: 1px solid #000; /* For visibility */
+}
+
+.legend-star {
+    background-image: url('star-removebg-preview.png');
+    background-size: cover;
 }
 
 
@@ -336,12 +371,23 @@ table td:first-child {
 
 </div>
 
+
+<div id="legend">
+  <ul>
+      <li><span class="legend-icon" style="background-color: white;"></span> Satellite</li>
+      <li><span class="legend-icon" style="background-color: red;"></span> Clicked Satellite</li>
+      <li><span class="legend-icon" style="background-color: green;"></span> Closest Satellite</li>
+      <li><span class="legend-icon legend-star"></span> User's Location</li>
+  </ul>
+</div>
+
+
 <div id="title_right">
   <a href="../indexin.html">Home</a>
-  <a href="/index.html">Tracker</a>
+  <a href="../tracker/index.html">Tracker</a>
   <a href="../satdata.html">Data</a>
   <a href="../about-in.html">About</a>
-  <a href="../index.html">Log Out</a>
+  <a href="../index.html">Logout</a>
 </div>
 
 
@@ -414,7 +460,7 @@ Use Up and down arrows zoom in and out. Use the mouse to rotate.<br /><br /></di
     return new THREE.Color([0x34cb57, 0x666666, 0xdb0b00][label]);
   });
 
-  var currentIndex = 0; // Keep track of the currently loaded data index
+  var currentIndex = 6; // Keep track of the currently loaded data index
   /*
   function loadDataAndUpdateGlobe(index) {
     xhr = new XMLHttpRequest();
@@ -511,7 +557,7 @@ Use Up and down arrows zoom in and out. Use the mouse to rotate.<br /><br /></di
     });
   }
   // Initial data load
-  loadDataAndUpdateGlobe1(currentIndex);
+  loadDataAndUpdateGlobeFAVORITE();
 
   // Event listener for MEO click
   var meoElement = document.getElementById('MEO');
@@ -524,6 +570,15 @@ Use Up and down arrows zoom in and out. Use the mouse to rotate.<br /><br /></di
     }
     // Add 'active' to 'MEO' 
     meoElement.classList.add('active');
+    var closestSatellitesTable = document.getElementById('topSatellitesList').parentElement;
+  closestSatellitesTable.style.display = 'table';
+
+  var closestSatelliteButton = document.getElementById('closestSatelliteButton');
+  closestSatelliteButton.style.display = 'block';
+
+  // Show the toggle table button
+  var toggleTableButton = document.getElementById('collapseButton');
+  toggleTableButton.style.display = 'block';
   });
 
   var leoElement = document.getElementById('LEO');
@@ -537,22 +592,45 @@ Use Up and down arrows zoom in and out. Use the mouse to rotate.<br /><br /></di
     }
     // Add 'active' to the 'LEO' 
     leoElement.classList.add('active');
+    var closestSatellitesTable = document.getElementById('topSatellitesList').parentElement;
+  closestSatellitesTable.style.display = 'table';
+
+  var closestSatelliteButton = document.getElementById('closestSatelliteButton');
+  closestSatelliteButton.style.display = 'block';
+
+  // Show the toggle table button
+  var toggleTableButton = document.getElementById('collapseButton');
+  toggleTableButton.style.display = 'block';
   });
 
 
-  var tleElement = document.getElementById('tle');
+var tleElement = document.getElementById('tle');
+tleElement.addEventListener('click', function() {
+  currentIndex = 0; // Update the index to load data[0][1]
+  loadDataAndUpdateGlobe1(currentIndex);
+
+  // Clear active
+  var activeElements = document.querySelectorAll('.active');
+  for (var i = 0; i < activeElements.length; i++) {
+    activeElements[i].classList.remove('active');
+  }
+
+  // Add 'active' to the 'tle'
   tleElement.classList.add('active');
-  tleElement.addEventListener('click', function() {
-    currentIndex = 0; // Update the index to load data[0][1]
-    loadDataAndUpdateGlobe1(currentIndex);
-    //Clear active
-    var activeElements = document.querySelectorAll('.active');
-    for (var i = 0; i < activeElements.length; i++) {
-      activeElements[i].classList.remove('active');
-    }
-    // Add 'active' to the 'tle' 
-    tleElement.classList.add('active');
-  });
+
+  // Hide the closest satellite button for the 'all' category
+  var closestSatellitesTable = document.getElementById('topSatellitesList').parentElement;
+  closestSatellitesTable.style.display = 'none';
+
+  var closestSatelliteButton = document.getElementById('closestSatelliteButton');
+  closestSatelliteButton.style.display = 'none';
+
+  // Hide the toggle table button
+  var toggleTableButton = document.getElementById('collapseButton');
+  toggleTableButton.style.display = 'none';
+
+});
+
 
   var starlinkElement = document.getElementById('starlink');
   starlinkElement.addEventListener('click', function() {
@@ -565,6 +643,15 @@ Use Up and down arrows zoom in and out. Use the mouse to rotate.<br /><br /></di
     }
     // Add 'active' to the 'tle' 
     starlinkElement.classList.add('active');
+    var closestSatellitesTable = document.getElementById('topSatellitesList').parentElement;
+  closestSatellitesTable.style.display = 'table';
+
+  var closestSatelliteButton = document.getElementById('closestSatelliteButton');
+  closestSatelliteButton.style.display = 'block';
+
+  // Show the toggle table button
+  var toggleTableButton = document.getElementById('collapseButton');
+  toggleTableButton.style.display = 'block';
   });
 
   var thoradelement = document.getElementById('thorad');
@@ -578,6 +665,15 @@ Use Up and down arrows zoom in and out. Use the mouse to rotate.<br /><br /></di
     }
     // Add 'active' to the 'tle' 
     thoradelement.classList.add('active');
+    var closestSatellitesTable = document.getElementById('topSatellitesList').parentElement;
+  closestSatellitesTable.style.display = 'table';
+
+  var closestSatelliteButton = document.getElementById('closestSatelliteButton');
+  closestSatelliteButton.style.display = 'block';
+
+  // Show the toggle table button
+  var toggleTableButton = document.getElementById('collapseButton');
+  toggleTableButton.style.display = 'block';
   });
 
   var onewebelement = document.getElementById('oneweb');
@@ -591,7 +687,23 @@ Use Up and down arrows zoom in and out. Use the mouse to rotate.<br /><br /></di
     }
     // Add 'active' to the 'tle' 
     onewebelement.classList.add('active');
+    var closestSatellitesTable = document.getElementById('topSatellitesList').parentElement;
+  closestSatellitesTable.style.display = 'table';
+
+  var closestSatelliteButton = document.getElementById('closestSatelliteButton');
+  closestSatelliteButton.style.display = 'block';
+
+  // Show the toggle table button
+  var toggleTableButton = document.getElementById('collapseButton');
+  toggleTableButton.style.display = 'block';
   });
+
+
+
+var Favoriteelement = document.getElementById('favorites');
+Favoriteelement.classList.add('active');
+
+
   var Favoriteelement = document.getElementById('favorites');
   Favoriteelement.addEventListener('click', function() {
     loadDataAndUpdateGlobeFAVORITE();
@@ -602,7 +714,18 @@ Use Up and down arrows zoom in and out. Use the mouse to rotate.<br /><br /></di
     }
     // Add 'active' to the 'tle' 
     Favoriteelement.classList.add('active');
+    var closestSatellitesTable = document.getElementById('topSatellitesList').parentElement;
+  closestSatellitesTable.style.display = 'table';
+
+  var closestSatelliteButton = document.getElementById('closestSatelliteButton');
+  closestSatelliteButton.style.display = 'block';
+
+  // Show the toggle table button
+  var toggleTableButton = document.getElementById('collapseButton');
+  toggleTableButton.style.display = 'block';
   });
+
+
   // Function to clear the globe
   function clearGlobe() {
     console.log("Clearing Globe");
