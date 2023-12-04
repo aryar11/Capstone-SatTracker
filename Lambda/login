@@ -1,0 +1,170 @@
+import json
+import pymysql
+from skyfield.api import EarthSatellite, load
+import boto3
+import math
+
+def connect_to_rds():
+    connection = pymysql.connect(
+        host='sattrack.ckiq4qoeqhbu.us-east-2.rds.amazonaws.com',
+        user='admin',
+        password='SatTracker23',
+        db='SatTracker',
+        charset='utf8mb4',
+        cursorclass=pymysql.cursors.DictCursor
+    )
+    return connection  
+def updateFavorite(username):
+    connection = connect_to_rds()
+    print("connected")
+    try:
+        with connection.cursor() as cursor:
+            # Step 1: Get the "favSat" column for the given username
+            select_query = "SELECT favSat FROM users2 WHERE username=%s"
+            cursor.execute(select_query, (username,))
+            result = cursor.fetchone()
+            
+            if result["favSat"] is not None:
+                #  Combine the existing list with the new data
+                existing_favSat = result["favSat"]
+                existing_satellite_data = existing_favSat.split(',')
+            else:
+                existing_satellite_data = []
+                print("it empty")
+            ts = load.timescale()
+            satellites_for_category = []
+            satellite_data_json = []
+            empty = True
+            for item in existing_satellite_data: 
+                empty = False
+                select_tle_query = "SELECT * FROM tle WHERE satCat = %s"
+                cursor.execute(select_tle_query, (item,))
+                tle_result = cursor.fetchall()
+                for row in tle_result:
+                    name = row['satName']
+                    satellite = EarthSatellite(row['line2'], row['line3'], row['line1'], ts=None)
+                    geocentric = satellite.at(ts.now())
+                    subpoint = geocentric.subpoint()
+                    if(not math.isnan(float(subpoint.latitude.degrees)) and not math.isnan(float(subpoint.longitude.degrees))):
+                        satellites_for_category.extend([ float(subpoint.latitude.degrees), float(subpoint.longitude.degrees), float(subpoint.elevation.km), name])
+            satellite_data_json.append(["Favorites", satellites_for_category])
+        if( not empty):
+            s3 = boto3.client(
+                's3',
+                aws_access_key_id='AKIA2GBQBRJE53N4XPM3',
+                aws_secret_access_key='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'
+            )
+        
+            bucket_name = "satdate"
+            html_file_path = "https://satdate.s3.us-east-2.amazonaws.com/favoriteData.json"
+        
+            # Specify the object key for the JSON file in S3
+            json_file_key = "favoriteData.json"
+            existing_json = []
+            # Append the new JSON data to the existing structure
+            print(satellite_data_json)
+            
+            existing_json.append(satellite_data_json[0])
+            # Convert the updated JSON structure to a string
+            updated_json_str = json.dumps(existing_json, indent=4)
+            
+            # Upload the updated JSON back to the S3 bucket
+            s3.put_object(Bucket=bucket_name, Key=json_file_key, Body=updated_json_str)
+        else:
+            print(empty)
+            s3 = boto3.client(
+                's3',
+                #aws_access_key_id='AKIA2GBQBRJE53N4XPM3',
+                #aws_secret_access_key='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'
+            )
+        
+            bucket_name = "satdate"
+            html_file_path = "https://satdate.s3.us-east-2.amazonaws.com/favoriteData.json"
+        
+            # Specify the object key for the JSON file in S3
+            json_file_key = "favoriteData.json"
+            existing_json = [
+                                [
+                                    "Favorites",
+                                    [
+                             
+                                    ]
+                                ]
+                            ]
+            # Convert the updated JSON structure to a string
+            updated_json_str = json.dumps(existing_json, indent=4)
+            # Upload the updated JSON back to the S3 bucket
+            s3.put_object(Bucket=bucket_name, Key=json_file_key, Body=updated_json_str)
+    finally:
+        connection.close()
+    pass
+def lambda_handler(event, context):
+    # Parse and process form data from event
+
+    
+    username = event['queryStringParameters']["username"]
+    password = event['queryStringParameters']["password"]
+
+    
+    try:
+        # Connect to SQL server
+        db_host = 'sattrack.ckiq4qoeqhbu.us-east-2.rds.amazonaws.com'
+        db_name = 'SatTracker'
+        db_user = 'admin'
+        db_password = 'SatTracker23'
+        
+        con2 = pymysql.connect(host=db_host, user=db_user, password=db_password, database=db_name, connect_timeout=5)
+        
+        # Query the database
+        cursor = con2.cursor()
+        find_query = "SELECT username, password from users2"
+        cursor.execute(find_query)
+        data = cursor.fetchall()
+        found = False
+        
+        if cursor.rowcount > 0 :
+            for row in data:
+                if (username == row[0]) and (password == row[1]):
+                    found = True
+                    break
+                else:
+                    found = False
+        else:
+            response = {
+                        "statusCode": 302,  # 302 is the HTTP status code for redirection
+                        "headers": {
+                            "Location": "https://dev5612.d1f42dcl5oszu2.amplifyapp.com/badlogin.html"  
+                            }
+                    }
+        if found == True:
+            updateFavorite(username)
+            response = {
+                        "statusCode": 302,  # 302 is the HTTP status code for redirection
+                        "headers": {
+                            "Location": "https://dev5612.d1f42dcl5oszu2.amplifyapp.com/tracker/index.html"  
+                            }
+                    }
+        else: 
+            response = {
+                        "statusCode": 302,  # 302 is the HTTP status code for redirection
+                        "headers": {
+                            "Location": "https://dev5612.d1f42dcl5oszu2.amplifyapp.com/badlogin.html"  
+                            }
+                    }
+                    
+        
+        # Close database connection
+        cursor.close()
+        con2.close()
+
+        # Redirect back to index.html
+        
+        
+    except Exception as e:
+        # Handle any errors that occur during database interaction
+        response = {
+            "statusCode": 500,  # 500 is the HTTP status code for internal server error
+            "body": json.dumps({"error": str(e)})
+        }
+
+    return response
