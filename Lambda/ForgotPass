@@ -1,0 +1,113 @@
+import json
+
+#def lambda_handler(event, context):
+    # Parse and process form data from event
+#    response = {
+#        "statusCode": 200,
+#        "body": json.dumps(event["queryStringParameters"])
+#    }
+
+#    return response
+
+import pymysql
+
+def lambda_handler(event, context):
+    # Parse and process form data from event
+
+    username = event['queryStringParameters']["username"]
+    security_answer = event['queryStringParameters']["security_answer"]
+    new_password = event['queryStringParameters']["new_password"]
+    conf_new_pass = event['queryStringParameters']["newconfirm_password"]
+    
+    
+        
+    try:
+        # Connect to SQL server
+        db_host = 'sattrack.ckiq4qoeqhbu.us-east-2.rds.amazonaws.com'
+        db_name = 'SatTracker'
+        db_user = 'admin'
+        db_password = 'SatTracker23'
+        
+        con3 = pymysql.connect(host=db_host, user=db_user, password=db_password, database=db_name, connect_timeout=5)
+        
+        if (new_password != conf_new_pass):
+            response = {
+                            "statusCode": 302,  # 302 is the HTTP status code for redirection
+                            "headers": {
+                                "Location": "https://dev5612.d1f42dcl5oszu2.amplifyapp.com/badpassword.html"  # Replace with your actual URL
+                                }
+                        }
+    
+        else :
+        
+            # Query the database
+            cursor = con3.cursor()
+            find_query = "SELECT name, username, security_question, security_answer, favSat from users2"
+            cursor.execute(find_query)
+            data = cursor.fetchall()
+            print(data)
+            found = False
+            
+            if cursor.rowcount > 0 :
+                for row in data:
+                    if (username == row[1]) and (security_answer == row[3]):
+                        
+                        found = True
+                        name = row[0]
+                        username = row[1]
+                        password = new_password
+                        security_question = row[2]
+                        security_answer = row[3]
+                        favSat = row[4]
+                        
+                        delete_query = "DELETE FROM users2 WHERE username = %s"
+                        cursor.execute(delete_query, username)
+                        
+                        ins_query = "INSERT INTO users2 (name, username, password, security_question, security_answer, favSat) VALUES (%s, %s, %s, %s, %s, %s)"
+                        cursor.execute(ins_query, (name, username, password, security_question, security_answer, favSat))
+                        con3.commit()
+                        found = True
+                        
+                        
+                        break
+                    
+                    else:
+                        found = False
+                else:
+                    response = {
+                                "statusCode": 302,  # 302 is the HTTP status code for redirection
+                                "headers": {
+                                    "Location": "https://dev5612.d1f42dcl5oszu2.amplifyapp.com/error.html"  # Replace with your actual URL
+                                    }
+                            }
+                if found == True:
+                    response = {
+                                "statusCode": 302,  # 302 is the HTTP status code for redirection
+                                "headers": {
+                                    "Location": "https://dev5612.d1f42dcl5oszu2.amplifyapp.com/tracker/index.html"  # Replace with your actual URL
+                                    }
+                            }
+                else: 
+                    response = {
+                                "statusCode": 302,  # 302 is the HTTP status code for redirection
+                                "headers": {
+                                    "Location": "https://dev5612.d1f42dcl5oszu2.amplifyapp.com/badlogin.html"  # Replace with your actual URL
+                                    }
+                            }
+                            
+                
+                # Close database connection
+                cursor.close()
+                con3.close()
+    
+                # Redirect back to index.html
+                
+            
+    except Exception as e:
+        # Handle any errors that occur during database interaction
+        response = {
+            "statusCode": 500,  # 500 is the HTTP status code for internal server error
+            "body": json.dumps({"error": str(e)})
+        }
+
+    return response

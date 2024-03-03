@@ -1,0 +1,768 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <title>WebGL Globe</title>
+  <meta charset="utf-8">
+  <style type="text/css">
+    html {
+      height: 100%;
+    }
+
+    
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: #000000 url(loading.gif) center center no-repeat;
+      color: #ffffff;
+      font-family: sans-serif;
+      font-size: 13px;
+      line-height: 20px;
+      height: 100%;
+    }
+
+    #info {
+
+      font-size: 11px;
+      position: absolute;
+      bottom: 5px;
+      background-color: rgba(0, 0, 0, 0.8);
+      border-radius: 3px;
+      right: 10px;
+      padding: 10px ;
+      
+      
+
+    }
+
+    a {
+      color: #aaa;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .bull {
+      padding: 0px 5px;
+      color: #555;
+    }
+
+    #title {
+      position: absolute;
+      top: 10px;
+      left: 20px; /* Position #title on the left side */
+      background-color: rgba(0, 0, 0, 0.2);
+      font: 20px/20px Georgia;
+      padding: 15px;
+    }
+
+    .logo_img{
+      position: absolute;
+      height:80 px;
+      top: 10px;
+      left: 20px;
+      
+    }
+
+    #title_right {
+      position: absolute;
+      top: 30px;
+      right: 40px;  /*Position /*#title_right on the right side */
+      background-color: rgba(0, 0, 0, 0.2);
+      font: 1.2rem system-ui;
+      /*padding: 15px;*/
+      text-align: right;
+    }
+    #title_right a {
+      color: #fff; /* Color of the link inside #title_right */
+      text-decoration: none; /* Remove underline from the link */
+      transition: color 0.3s ease; /* Add a smooth color transition */
+      padding: 20px 20px 50px;
+    }
+
+    #title_right a:hover {
+      color: blue; /* Change the link color when you hover over it */
+    }
+
+    #satelliteData{
+      top: 130px;
+    }
+    #currentInfo {
+        width: 270px;
+        position: absolute;
+        left: 20px;
+        top: 110px;
+        background-color: rgba(0,0,0,0.2);
+        border-top: 1px solid rgba(255,255,255,0.4);
+        padding: 10px;
+    }
+
+    .year {
+
+      font: 16px Georgia;
+      line-height: 26px;
+      height: 30px;
+      text-align: center;
+      float: left;
+      width: 90px;
+      color: rgba(255, 255, 255, 0.4);
+
+      cursor: pointer;
+      transition: all 0.1s ease-out;
+    }
+
+    .year:hover, .year.active {
+      font-size: 23px;
+      color: #fff;
+    }
+
+    #ce span {
+      display: none;
+    }
+
+    span.green {
+      color: #34cb57;
+    }
+
+    span.gray {
+      color: #666666;
+    }
+
+    span.red {
+      color: #db0b00;
+    }
+    #popup {
+      position: absolute;
+      background-color: #fff;
+      padding: 10px;
+      border: 1px solid #ccc;
+      box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+      z-index: 999;
+    }
+    .satellite:hover, .satellite.active {
+        font-size: 24px;
+        color: #fff;
+    }
+    .satellite {
+        font: 16px Georgia;
+        line-height: 26px;
+        height: 30px;
+        text-align: center;
+        float: left;
+        width: 90px;
+        color: rgba(255, 255, 255, 0.4);
+
+        cursor: pointer;
+        transition: all 0.1s ease-out;
+    }
+    #locationInput {
+    position: absolute;
+    top: 100px;
+    right: 10px;
+    background-color: rgba(0,0,0,0.2);  /* Semi-transparent background */
+    padding: 5px;
+    border-radius: 5px;
+}
+
+#address {
+    padding: 5px;
+    margin-right: 10px;
+    vertical-align: middle;
+}
+
+button {
+    padding: 5px 10px;
+    cursor: pointer;
+    background-color: blue;  /* Reusing your green color */
+    border: none;
+    color: white;
+    vertical-align: middle;
+}
+
+button.closestSatelliteButton{
+  margin-top:20px;
+}
+
+button:hover {
+    background-color: #4837ff;
+}
+
+/* New CSS for tables */
+table.right-table {
+    width: 100%; 
+    margin-top: 20px;
+    border-collapse: collapse;
+}
+
+table.satData {
+    width: 100%; 
+    margin-top: 60px;
+    border-collapse: collapse;
+}
+
+table, th, td {
+    border: 1px solid #dddddd;
+    padding: 8px;
+    text-align: left;
+}
+
+th {
+  background-color: #f2f2f2;
+  color: #333333;  
+}
+
+table td:first-child {
+  width: 70px;
+}
+
+.right-table td:nth-child(2) {
+  width: 80px;
+}
+
+/* Style for collapse button */
+.collapse-btn {
+    display: block;
+    text-align: center;
+    padding: 5px;
+    background-color: #333333;  
+    color: #ffffff;             
+    cursor: pointer;
+    border: none;
+    width: 100%;
+    margin-top: 10px;
+}
+
+.collapse-btn:hover {
+    background-color: #555555;  
+}
+
+/* Initially hide the table body */
+#topSatellitesList {
+    display: none;
+    
+}
+
+
+
+#searchBar {
+  position: absolute;
+  top: 450px; /* Adjust this value as needed to position the search bar higher */
+  left: 1px;
+  width: 270px;
+  text-align: center;
+}
+
+#satelliteSearch {
+  padding: 10px;
+  font-size: 16px;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+}
+
+#searchResults {
+  border-radius: 3px;
+  max-height: 85px;
+  overflow-y: auto;
+  cursor: pointer;
+}
+
+#searchResults li {
+  font-size: 10px; /* Smaller font size */
+  padding: 1px; /* Smaller padding */
+  margin: 1px; /* Smaller margin */
+  list-style-type: none; /* Optional: removes bullet points */
+}
+
+#legend {
+  position: absolute;
+  bottom: 1px; /* Adjust as needed, or use 'top' if more appropriate */
+  left: 20px;
+  background-color: transparent;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+#legend ul {
+    list-style: none;
+    padding: 0;
+}
+
+#legend li {
+    margin-bottom: 5px;
+    font-size: 10px; /* Adjust as needed */
+}
+
+.legend-icon {
+    display: inline-block;
+    width: 10px; /* Adjust as needed */
+    height: 10px; /* Adjust as needed */
+    margin-right: 10px;
+    border: 1px solid #000; /* For visibility */
+}
+
+.legend-star {
+    background-image: url('star-removebg-preview.png');
+    background-size: cover;
+}
+
+
+  </style>
+</head>
+<body>
+
+<div id="container"></div>
+<div id="popup" style="display: none; position: absolute; background-color: rgba(0, 0, 0, 0.7); color: white; padding: 10px;"></div>
+
+<div id="info">
+  The <a href="http://www.chromeexperiments.com/globe">WebGL Globe</a> is an
+  open platform for visualizing geographic data. 
+  Source data provided by <a href="http://wwwspace-track.org">Space-Track.org</a>.
+</div>
+
+<div class="logo_img">
+  <img src="../images/SatTrackerlogo.png"
+  alt="pic" class="image" id="logo_img" width= 40%/>
+</div>
+
+<div id="locationInput">
+  <input type="text" id="address" placeholder="Enter address..." style="vertical-align: middle;">
+  <button id="addressButton">Find using address</button>
+  <button id="locationButton">Get my location</button>
+  
+
+  
+<!-- User location table -->
+<table class="right-table">
+<thead>
+    <tr>
+        <th colspan="2">User Location</th>
+    </tr>
+</thead>
+<tbody>
+    <tr>
+        <td>Latitude:</td>
+        <td id="userLatValue">-</td>
+    </tr>
+    <tr>
+        <td>Longitude:</td>
+        <td id="userLonValue">-</td>
+    </tr>
+</tbody>
+</table>
+
+<!-- Button to find closest satellite -->
+<button id="closestSatelliteButton">Find Closest Satellite</button>
+
+<!-- Closest satellite data table -->
+<!-- Closest satellite data table -->
+<table class="right-table">
+  <thead>
+      <tr>
+          <th>Top 10 Closest Satellites</th>
+      </tr>
+  </thead>
+  <tbody id="topSatellitesList">
+      <!-- The names will be added here by the JavaScript -->
+  </tbody>
+</table>
+<button id="collapseButton" class="collapse-btn">Toggle Table</button>
+
+</div>
+
+
+<div id="legend">
+  <ul>
+      <li><span class="legend-icon" style="background-color: white;"></span> Satellite</li>
+      <li><span class="legend-icon" style="background-color: red;"></span> Clicked Satellite</li>
+      <li><span class="legend-icon" style="background-color: green;"></span> Closest Satellite</li>
+      <li><span class="legend-icon legend-star"></span> User's Location</li>
+  </ul>
+</div>
+
+
+<div id="title_right">
+  <a href="../indexin.html">Home</a>
+  <a href="../tracker/index.html">Tracker</a>
+  <a href="../satdata.html">Data</a>
+  <a href="../about-in.html">About</a>
+  <a href="../index.html">Logout</a>
+</div>
+
+
+<div id="currentInfo">     
+<span id="tle" class="satellite">All</span>
+<span id="LEO" class="satellite">LEO</span>
+<span id="MEO" class="satellite">MEO</span>
+<br><br> 
+<span id="starlink" class="satellite">Starlink</span>
+<span id="thorad" class="satellite">Thorad</span>
+<span id="oneweb" class="satellite">Oneweb</span>  
+<span id="favorites" class="satellite">Favorites</span>  
+<table class="satData">
+  <thead>
+  <tr>
+      <th colspan="2">Selected Satellite</th>
+  </tr>
+</thead>
+        <tbody>
+            <tr>
+                <td>Latitude:</td>
+                <td id="latValue">-</td>
+            </tr>
+            <tr>
+                <td>Longitude:</td>
+                <td id="lngValue">-</td>
+            </tr>
+            <tr>
+                <td>Altitude:</td>
+                <td id="altValue">-</td>
+            </tr>
+            <tr>
+                <td>Name:</td>
+                <td id="nameValue">-</td>
+            </tr>
+        </tbody>
+    </table>
+    <script type = "text/javascript">function clicky(){
+      url = 'https://www.google.com/search?q=' + document.getElementById('nameValue').textContent + '+satellite+info'
+      window.open(url, '_blank')
+      }</script>
+    <button onclick ="clicky()" id="searchSat">More Info</button>
+</div>
+
+<!-- Search Bar Section -->
+<div id="searchBar">
+  <input type="text" id="satelliteSearch" placeholder="Search Satellite..." />
+  <!-- Here you can add a list to show the search results -->
+  <ul id="searchResults" class="search-results" style="display: none;">
+      <!-- Search results will be dynamically inserted here -->
+  </ul>
+</div>
+
+<br /><br /> <br /><br />
+Use Up and down arrows zoom in and out. Use the mouse to rotate.<br /><br /></div>
+<div id="popup" style="display: none; position: absolute; background-color: rgba(0, 0, 0, 0.7); color: white; padding: 10px;"></div>
+
+<script type="text/javascript" src="third-party/Detector.js"></script>
+<!--
+<script type="text/javascript" src="third-party/three.min.js"></script>
+-->
+<script type="text/javascript" src="third-party/new_three_min.js"></script>
+<script type="text/javascript" src="globe.js"></script>
+<script type="text/javascript" src="third-party/Tween.js"></script>
+<script src="https://sdk.amazonaws.com/js/aws-sdk-2.1135.0.min.js"></script>
+
+<script type="text/javascript">
+
+  var globe = DAT.Globe(document.getElementById('container'), function(label) {
+    return new THREE.Color([0x34cb57, 0x666666, 0xdb0b00][label]);
+  });
+
+  var currentIndex = 6; // Keep track of the currently loaded data index
+  /*
+  function loadDataAndUpdateGlobe(index) {
+    xhr = new XMLHttpRequest();
+    xhr.open('GET', 'test.json', true);
+    xhr.onreadystatechange = function(e) {
+      if (xhr.readyState === 4) {
+        if (xhr.status === 200) {
+          var data = JSON.parse(xhr.responseText);
+          if (data[index] && data[index][1]) {
+            console.log(data[index]);
+            window.data = data[index][1];
+            clearGlobe(); 
+            globe.addData(data[index][1], { format: 'magnitude' });
+            globe.createPoints();
+            globe.animate();
+            document.body.style.backgroundImage = 'none'; // Remove loading
+          }
+        }
+      }
+    };
+    xhr.send(null);
+  }
+  */
+  function loadDataAndUpdateGlobe1(index) {
+    // Initialize the AWS SDK
+    AWS.config.update({
+      accessKeyId: 'AKIA2GBQBRJE53N4XPM3',
+      secretAccessKey: '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',
+      region: 'us-east-2',
+    });
+
+    // Create an S3 object
+    var s3 = new AWS.S3();
+
+    // Specify the S3 bucket and object (JSON file) key
+    var bucketName = 'satdate';
+    var objectKey = 'satellites.json';
+
+    // Use the getObject method to retrieve the JSON file
+    s3.getObject({ Bucket: bucketName, Key: objectKey }, function (err, data) {
+      if (err) {
+        console.error('Error loading JSON file from S3:', err);
+      } else {
+        var jsonContent = data.Body.toString('utf-8');
+        var jsonData = JSON.parse(jsonContent);
+
+        if (jsonData[index] && jsonData[index][1]) {
+          
+          window.data = jsonData[index][1];
+          clearGlobe();
+          globe.addData(jsonData[index][1], { format: 'magnitude' });
+          globe.createPoints();
+          globe.animate();
+          document.body.style.backgroundImage = 'none'; // Remove loading
+        }
+      }
+    });
+  }
+  function loadDataAndUpdateGlobeFAVORITE() {
+    // Initialize the AWS SDK
+    AWS.config.update({
+      accessKeyId: 'AKIA2GBQBRJE53N4XPM3',
+      secretAccessKey: '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',
+      region: 'us-east-2',
+    });
+
+    // Create an S3 object
+    var s3 = new AWS.S3();
+
+    // Specify the S3 bucket and object (JSON file) key
+    var bucketName = 'satdate';
+    var objectKey = 'favoriteData.json';
+    
+    // Use the getObject method to retrieve the JSON file
+    s3.getObject({ Bucket: bucketName, Key: objectKey }, function (err, data) {
+      if (err) {
+        console.error('Error loading JSON file from S3:', err);
+      } 
+      else {
+        
+        var jsonContent = data.Body.toString('utf-8');
+        var jsonData = JSON.parse(jsonContent);
+        
+        if (jsonData[0] && jsonData[0][1]) {
+          
+          window.data = jsonData[0][1];
+          clearGlobe();
+          globe.addData(jsonData[0][1], { format: 'magnitude' });
+          globe.createPoints();
+          globe.animate();
+          document.body.style.backgroundImage = 'none'; // Remove loading
+        }
+      }
+    });
+  }
+  // Initial data load
+  loadDataAndUpdateGlobeFAVORITE();
+
+  // Event listener for MEO click
+  var meoElement = document.getElementById('MEO');
+  meoElement.addEventListener('click', function() {
+    currentIndex = 2; // Update the index to load data[1][1]
+    loadDataAndUpdateGlobe1(currentIndex);
+    var activeElements = document.querySelectorAll('.active');
+    for (var i = 0; i < activeElements.length; i++) {
+      activeElements[i].classList.remove('active');
+    }
+    // Add 'active' to 'MEO' 
+    meoElement.classList.add('active');
+    var closestSatellitesTable = document.getElementById('topSatellitesList').parentElement;
+  closestSatellitesTable.style.display = 'table';
+
+  var closestSatelliteButton = document.getElementById('closestSatelliteButton');
+  closestSatelliteButton.style.display = 'block';
+
+  // Show the toggle table button
+  var toggleTableButton = document.getElementById('collapseButton');
+  toggleTableButton.style.display = 'block';
+  });
+
+  var leoElement = document.getElementById('LEO');
+  leoElement.addEventListener('click', function() {
+    currentIndex = 1; // Update the index to load data[0][1]
+    loadDataAndUpdateGlobe1(currentIndex);
+    //Clear active
+    var activeElements = document.querySelectorAll('.active');
+    for (var i = 0; i < activeElements.length; i++) {
+      activeElements[i].classList.remove('active');
+    }
+    // Add 'active' to the 'LEO' 
+    leoElement.classList.add('active');
+    var closestSatellitesTable = document.getElementById('topSatellitesList').parentElement;
+  closestSatellitesTable.style.display = 'table';
+
+  var closestSatelliteButton = document.getElementById('closestSatelliteButton');
+  closestSatelliteButton.style.display = 'block';
+
+  // Show the toggle table button
+  var toggleTableButton = document.getElementById('collapseButton');
+  toggleTableButton.style.display = 'block';
+  });
+
+
+var tleElement = document.getElementById('tle');
+tleElement.addEventListener('click', function() {
+  currentIndex = 0; // Update the index to load data[0][1]
+  loadDataAndUpdateGlobe1(currentIndex);
+
+  // Clear active
+  var activeElements = document.querySelectorAll('.active');
+  for (var i = 0; i < activeElements.length; i++) {
+    activeElements[i].classList.remove('active');
+  }
+
+  // Add 'active' to the 'tle'
+  tleElement.classList.add('active');
+
+  // Hide the closest satellite button for the 'all' category
+  var closestSatellitesTable = document.getElementById('topSatellitesList').parentElement;
+  closestSatellitesTable.style.display = 'none';
+
+  var closestSatelliteButton = document.getElementById('closestSatelliteButton');
+  closestSatelliteButton.style.display = 'none';
+
+  // Hide the toggle table button
+  var toggleTableButton = document.getElementById('collapseButton');
+  toggleTableButton.style.display = 'none';
+
+});
+
+
+  var starlinkElement = document.getElementById('starlink');
+  starlinkElement.addEventListener('click', function() {
+    currentIndex = 4; // Update the index to load data[0][1]
+    loadDataAndUpdateGlobe1(currentIndex);
+    //Clear active
+    var activeElements = document.querySelectorAll('.active');
+    for (var i = 0; i < activeElements.length; i++) {
+      activeElements[i].classList.remove('active');
+    }
+    // Add 'active' to the 'tle' 
+    starlinkElement.classList.add('active');
+    var closestSatellitesTable = document.getElementById('topSatellitesList').parentElement;
+  closestSatellitesTable.style.display = 'table';
+
+  var closestSatelliteButton = document.getElementById('closestSatelliteButton');
+  closestSatelliteButton.style.display = 'block';
+
+  // Show the toggle table button
+  var toggleTableButton = document.getElementById('collapseButton');
+  toggleTableButton.style.display = 'block';
+  });
+
+  var thoradelement = document.getElementById('thorad');
+  thoradelement.addEventListener('click', function() {
+    currentIndex = 5; // Update the index to load data[0][1]
+    loadDataAndUpdateGlobe1(currentIndex);
+    //Clear active
+    var activeElements = document.querySelectorAll('.active');
+    for (var i = 0; i < activeElements.length; i++) {
+      activeElements[i].classList.remove('active');
+    }
+    // Add 'active' to the 'tle' 
+    thoradelement.classList.add('active');
+    var closestSatellitesTable = document.getElementById('topSatellitesList').parentElement;
+  closestSatellitesTable.style.display = 'table';
+
+  var closestSatelliteButton = document.getElementById('closestSatelliteButton');
+  closestSatelliteButton.style.display = 'block';
+
+  // Show the toggle table button
+  var toggleTableButton = document.getElementById('collapseButton');
+  toggleTableButton.style.display = 'block';
+  });
+
+  var onewebelement = document.getElementById('oneweb');
+  onewebelement.addEventListener('click', function() {
+    currentIndex = 3; // Update the index to load data[0][1]
+    loadDataAndUpdateGlobe1(currentIndex);
+    //Clear active
+    var activeElements = document.querySelectorAll('.active');
+    for (var i = 0; i < activeElements.length; i++) {
+      activeElements[i].classList.remove('active');
+    }
+    // Add 'active' to the 'tle' 
+    onewebelement.classList.add('active');
+    var closestSatellitesTable = document.getElementById('topSatellitesList').parentElement;
+  closestSatellitesTable.style.display = 'table';
+
+  var closestSatelliteButton = document.getElementById('closestSatelliteButton');
+  closestSatelliteButton.style.display = 'block';
+
+  // Show the toggle table button
+  var toggleTableButton = document.getElementById('collapseButton');
+  toggleTableButton.style.display = 'block';
+  });
+
+
+
+var Favoriteelement = document.getElementById('favorites');
+Favoriteelement.classList.add('active');
+
+
+  var Favoriteelement = document.getElementById('favorites');
+  Favoriteelement.addEventListener('click', function() {
+    loadDataAndUpdateGlobeFAVORITE();
+    //Clear active
+    var activeElements = document.querySelectorAll('.active');
+    for (var i = 0; i < activeElements.length; i++) {
+      activeElements[i].classList.remove('active');
+    }
+    // Add 'active' to the 'tle' 
+    Favoriteelement.classList.add('active');
+    var closestSatellitesTable = document.getElementById('topSatellitesList').parentElement;
+  closestSatellitesTable.style.display = 'table';
+
+  var closestSatelliteButton = document.getElementById('closestSatelliteButton');
+  closestSatelliteButton.style.display = 'block';
+
+  // Show the toggle table button
+  var toggleTableButton = document.getElementById('collapseButton');
+  toggleTableButton.style.display = 'block';
+  });
+
+
+  // Function to clear the globe
+  function clearGlobe() {
+    console.log("Clearing Globe");
+
+    // Loop through each satellite cube and remove it from the scene
+    for (var i = satelliteCubes.length - 1; i >= 0; i--) {
+        var cube = satelliteCubes[i];
+        globe.scene.remove(cube); // Remove cube from scene
+
+        // Proper cleanup to ensure memory is released
+        cube.geometry.dispose();
+        cube.material.dispose();
+    }
+    satelliteCubes = [];
+    console.log("Satellite cubes cleared");
+
+    if (globe.points) {
+        globe.scene.remove(globe.points);
+        globe.points.geometry.dispose();
+        globe.points.material.dispose();
+        globe.points = null;
+        console.log("Globe points cleared");
+    }
+  }
+
+</script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-249775-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+</body>
+
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+    <!--Setting up header with basic document information. Reference my css doc and fonts I'll be using-->
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tracker</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href=""https://use.fontawesome.com/releases/v5.14.0/css/all.css" integrity="sha384-HzLeBuhoNPvSl5KYnjx0BT+WB0QEEqLprO+Nbkkk5gbc67FTaL7XIGa2w1L0Xbgc" crossorigin="anonymous">
+</head>
+
+<body>
+    <!--Navbar-->
+    <nav class="navbar">
+        <div class="navbar_cont">
+            <a href="index.html" id="navbar_logo">
+                <!--<i class="fas fa-gem"></i> SatTracker</a>-->
+                <div class="logo_img">
+                    <img src="images/SatTrackerlogo.png"
+                    alt="pic" class="image" id="logo_img" width= 40%/>
+                </div>
+            
+            <ul class="navbar_menu">
+                <li class="navbar_item">
+                    <a href="index.html" class="navbar_links"> Home </a>
+                </li>
+                <!--<li class="navbar_item">
+                    <a href="tracker.html" class="navbar_links">
+                        Tracker
+                    </a>
+                </li> -->
+                <li class="navbar_item">
+                    <a href="about.html" class="navbar_links"> About </a>
+                </li>
+                
+                <li class="navbar_btn2">
+                    <a href="login.html" class="button">
+                        Log In
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+
+    <!--TAbout info-->
+    <div class="about">
+        <div class="about_cont">
+            <h1>Using SatTracker</h1>
+            </div>  
+
+        <div class="about_word">
+            <p> The SatTracker satellite visualization tool offers a number of features created
+                specifically for satellite enthusiasts. To access the tool, click the "Tracker" 
+                button located at the top of the site. Key features of the tool include the 
+                "Nearest Satellite Finder" located on the right side of the screen, as well as the 
+                "Satellite Searcher" on the left side of the screen.
+            </p>
+            <br> 
+            <h3>
+                Nearest Satellite Finder</h3>
+            <p> To find satellites near you, simply click "Get My Location" followed by "Find Closest Satellite". 
+                The satellites nearest to you will be highlighted in Green, and you can view their data by toggling 
+                the table on the right side of the screen.
+            </p>
+            <br> 
+            <h3>Satellite Searcher</h3>
+            <p> Simply enter the name of any satellite you wish to view, and click on it's name in the drop down list
+                to have it highlighted on the globe, and its information appear in the table on the left.
+            </p>
+            <br> 
+            <h3>Selected Satellite</h3>
+            <p> This table displays information of the current satellite selected. Clicking the "More Info"
+                button perfroms a google search of the selected satellite.
+            </p>
+            <br>
+            <h3>Favorites Feature</h3>
+            <p> To add satellites to your "favorites" list, simply go to the "Data" tab and pick out satellites you would like to plot.
+                Note: The limit of satellites on the favorite list is 500.
+            </p>
+            <br> 
+            <br> 
+            <br> 
+        <div class="about_cont">
+            <h1>About SatTracker</h1>
+        </div>
+        <div class="abt_img">
+            <img src="images/tamulogo.jpg"
+            alt="pic" class="image" id="about_img"/>
+        </div>
+        <div class="about_word">
+            <p>This website was created as a ECEN Capstone project by Kyler Holley, Arya Rahmanian, and Stuart Kinzel. 
+                It's purpose is to provide a way for people to track satellites using an interactive globe.  </p>
+        </div>
+        <div class="CAC_btn">
+            <a href="mailto: kholley@tamu.edu" class="button">Contact Us</a>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    </body>
+    </html>

@@ -1,0 +1,117 @@
+import json
+import pymysql
+import boto3 
+def lambda_handler(event, context):
+    # Parse and process form data from event
+    #print(event)
+    name =  event['queryStringParameters']["name"]
+    username = event['queryStringParameters']["username"]
+    password = event['queryStringParameters']["password"]
+    confirm_password = event['queryStringParameters']["confirm_password"]
+    security_question =event['queryStringParameters']["security_question"]
+    security_answer = event['queryStringParameters']["security_answer"]
+    
+    try:
+        # Connect to SQL server
+        db_host = 'sattrack.ckiq4qoeqhbu.us-east-2.rds.amazonaws.com'
+        db_name = 'SatTracker'
+        db_user = 'admin'
+        db_password = 'SatTracker23'
+        
+        connection = pymysql.connect(host=db_host, user=db_user, password=db_password, database=db_name, connect_timeout=5)
+        
+        if (password != confirm_password) :
+            response = {
+                         "statusCode": 302,  # 302 is the HTTP status code for redirection
+                         "headers": {
+                               "Location": "https://dev5612.d1f42dcl5oszu2.amplifyapp.com/badpassword.html"  # Replace with your actual URL
+                         }
+                     }
+        
+        else :
+             # Query the database
+            cursor = connection.cursor()
+            find_query = "SELECT username from users2"
+            cursor.execute(find_query)
+            data = cursor.fetchall()
+            found = False
+            
+            if cursor.rowcount > 0 :
+                for row in data:
+                    if (username == row[0]) :
+                        found = True
+                        connection.close()
+                        cursor.close()
+                         # Redirect back to index.html
+                        response = {
+                             "statusCode": 302,  # 302 is the HTTP status code for redirection
+                             "headers": {
+                                   "Location": "https://dev5612.d1f42dcl5oszu2.amplifyapp.com/takenemail.html"  # Replace with your actual URL
+                             }
+                         }
+                        break
+                    else:
+                        found = False
+                
+                
+            else:
+                response = {
+                    "statusCode": 302,  # 302 is the HTTP status code for redirection
+                    "headers": {
+                                "Location": "https://dev5612.d1f42dcl5oszu2.amplifyapp.com/error.html"  # Replace with your actual URL
+                                }
+                        }
+                return 0
+                    
+                    
+            # Insert form data into the database
+            if found == False:
+                
+                cursor2 = connection.cursor()
+                insert_query = "INSERT INTO users2 (name, username, password, security_question, security_answer) VALUES (%s, %s, %s, %s, %s)"
+                cursor2.execute(insert_query, (name, username, password, security_question, security_answer))
+                connection.commit()
+                # Close database connection
+                cursor2.close()
+                connection.close()
+                
+                s3 = boto3.client(
+                    's3',
+                    #aws_access_key_id='AKIA2GBQBRJE53N4XPM3',
+                    #aws_secret_access_key='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'
+                )
+            
+                bucket_name = "satdate"
+                html_file_path = "https://satdate.s3.us-east-2.amazonaws.com/favoriteData.json"
+            
+                # Specify the object key for the JSON file in S3
+                json_file_key = "favoriteData.json"
+                existing_json = [
+                                    [
+                                        "Favorites",
+                                        [
+                                 
+                                        ]
+                                    ]
+                                ]
+                # Convert the updated JSON structure to a string
+                #updated_json_str = json.dumps(existing_json, indent=4)
+                # Upload the updated JSON back to the S3 bucket
+                #s3.put_object(Bucket=bucket_name, Key=json_file_key, Body=updated_json_str)
+                # Redirect back to index.html
+                response = {
+                         "statusCode": 302,  # 302 is the HTTP status code for redirection
+                          "headers": {
+                              "Location": "https://dev5612.d1f42dcl5oszu2.amplifyapp.com/about-in.html"  # Replace with your actual URL
+                            }
+                }
+               
+        
+    except Exception as e:
+        # Handle any errors that occur during database interaction
+        response = {
+            "statusCode": 500,  # 500 is the HTTP status code for internal server error
+            "body": json.dumps({"error": str(e)})
+        }
+
+    return response
